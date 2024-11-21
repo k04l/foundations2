@@ -1,10 +1,9 @@
 // src/api/routes.js
-import express from 'express';
 import { Router } from 'express';
 
 // Import controllers (you'll need to create these)
 // Commented out until you create the controllers
-// import { 
+// import {
 //   getAllItems,
 //   getItemById,
 //   createItem,
@@ -21,7 +20,8 @@ router.get('/health', (req, res) => {
 
 // Example routes - Uncomment and modify once you have controllers
 // Items routes
-router.route('/items')
+router
+  .route('/items')
   .get((req, res) => {
     // getAllItems
     res.status(200).json({ message: 'Get all items' });
@@ -31,14 +31,17 @@ router.route('/items')
     res.status(201).json({ message: 'Create new item', data: req.body });
   });
 
-router.route('/items/:id')
+router
+  .route('/items/:id')
   .get((req, res) => {
     // getItemById
     res.status(200).json({ message: `Get item ${req.params.id}` });
   })
   .put((req, res) => {
     // updateItem
-    res.status(200).json({ message: `Update item ${req.params.id}`, data: req.body });
+    res
+      .status(200)
+      .json({ message: `Update item ${req.params.id}`, data: req.body });
   })
   .delete((req, res) => {
     // deleteItem
@@ -46,7 +49,8 @@ router.route('/items/:id')
   });
 
 // Users routes example
-router.route('/users')
+router
+  .route('/users')
   .get((req, res) => {
     res.status(200).json({ message: 'Get all users' });
   })
@@ -54,12 +58,15 @@ router.route('/users')
     res.status(201).json({ message: 'Create new user', data: req.body });
   });
 
-router.route('/users/:id')
+router
+  .route('/users/:id')
   .get((req, res) => {
     res.status(200).json({ message: `Get user ${req.params.id}` });
   })
   .put((req, res) => {
-    res.status(200).json({ message: `Update user ${req.params.id}`, data: req.body });
+    res
+      .status(200)
+      .json({ message: `Update user ${req.params.id}`, data: req.body });
   })
   .delete((req, res) => {
     res.status(200).json({ message: `Delete user ${req.params.id}` });

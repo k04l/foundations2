@@ -1,0 +1,25 @@
+{
+    "env": {
+      "node": true,
+      "es2021": true,
+      "jest": true
+    },
+    "extends": ["eslint:recommended", "prettier"],
+    "parserOptions": {
+      "ecmaVersion": 2022,
+      "sourceType": "module"
+    },
+    "globals": {
+    "process": true
+  },
+    "rules": {
+    "constructor-super": "off",
+    "no-unused-vars": ["error", {
+      "argsIgnorePattern": "^(next|_)",
+      "varsIgnorePattern": "^_"
+    }],
+    "no-undef": ["error", {
+      "typeof": true
+    }]
+  }
+}
