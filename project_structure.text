@@ -1,0 +1,53 @@
+- .eslintignore
+- .gitignore
+- backend
+  - .env
+  - .env.example
+  - .eslintrc.json
+  - .gitignore
+  - .husky
+    - pre-commit
+  - .prettierrc
+  - logs
+    - all.log
+    - error.log
+  - package-lock.json
+  - package.json
+  - src
+    - api
+      - controllers
+        - auth.controller.js
+      - routes
+        - auth.routes.js
+        - routes.js
+      - validators
+    - app.js
+    - config
+      - database.js
+      - env.js
+    - middleware
+      - auth.middleware.js
+      - error.middleware.js
+      - logger.middleware.js
+    - models
+      - user.model.js
+    - server.js
+    - services
+    - utils
+      - email.js
+      - logger.js
+- eslint.config.js
+- index.html
+- package-lock.json
+- package.json
+- public
+  - vite.svg
+- README.md
+- src
+  - App.css
+  - App.jsx
+  - assets
+    - react.svg
+  - index.css
+  - main.jsx
+- vite.config.js
