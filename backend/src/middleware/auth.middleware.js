@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { AppError } from './error.middleware.js';
 import User from '../models/user.model.js';
 import { config } from '../config/env.js';
+import logger from '../utils/logger.js';
 
 /**
  * Middleware to protect routes that require authentication
@@ -37,10 +38,25 @@ export const protect = async (req, res, next) => {
       req.user = user;
       next();
     } catch (err) {
+      logger.error('Token verification failed', err);
       return next(new AppError('Invalid token or token expired', 401));
     }
   } catch (err) {
-    next(new AppError('Error authenticating user', 500));
+    logger.error('Auth middleware error:', err);
+    next(err);
+    //next(new AppError('Error authenticating user', 500));
+  }
+};
+
+export const checkEmailVerification = async (req, res, next) => {
+  try {
+    if (!req.user.isEmailVerified) {
+      return next(new AppError('Email not verified', 403));
+    }
+    next();
+  } catch (err) {
+    logger.error('Email verification check error:', err);
+    next(err);
   }
 };
 

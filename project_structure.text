@@ -8,11 +8,14 @@
   - .husky
     - pre-commit
   - .prettierrc
+  - check-user.js
+  - email-test.js
   - logs
     - all.log
     - error.log
   - package-lock.json
   - package.json
+  - reset-password.js
   - src
     - api
       - controllers
@@ -36,6 +39,7 @@
     - utils
       - email.js
       - logger.js
+  - test-server.js
 - eslint.config.js
 - index.html
 - package-lock.json

@@ -46,20 +46,6 @@ const sendTokenResponse  = async (user, statusCode, res) => {
     }
 };
 
-//     if (config.nodeEnv === 'production') {
-//         options.secure = true;
-//     }
-
-//     res
-//         .status(statusCode)
-//         .cookie('token', token, options)
-//         .json({
-//             success: true,
-//             token,
-//             refreshToken
-//         });
-// };
-
 // @desc    Register user
 // @route   POST /api/v1/auth/register
 // @access  Public
@@ -100,7 +86,7 @@ export const register = async (req, res, next) => {
             await user.save();
 
             // Create verification url
-            const verificationUrl = `${config.clientUrl}/verify-email/${verificationToken}`;
+            const verificationUrl = `${config.clientUrl}/api/v1/auth/verify-email/${verificationToken}`;
             const message = `Please verify your email by clicking on this link: \n\n ${verificationUrl}`;
 
             try {
@@ -121,16 +107,7 @@ export const register = async (req, res, next) => {
 
                 return next(new AppError('Registration failed: Unable to send complete registration. Please try again later.', 500));
             }
-        // } catch (dbError) {
-        //     logger.error('Database error during registration:', dbError);
-
-        //     // Check for duplicate email
-        //     if (dbError.code === 11000) {
-        //         return next(new AppError('Email already registered', 400));
-        //     } 
-
-        //     throw dbError; // Re-throw for general error handling
-        // }
+ 
     } catch (err) {
         logger.error('Registration error:', {
             error: err.message,
@@ -140,25 +117,6 @@ export const register = async (req, res, next) => {
         next(new AppError(err.message || 'Error registering user', 500));
     }
 };
-
-        // // Create token
-        // const token = user.getSignedJwtToken();
-        // const refreshToken = user.generateRefreshToken();
-
-        // user.refreshToken = refreshToken;
-        // await user.save();
-
-        //         sendTokenResponse(user, 201, res);
-        //     } catch (err) {
-        //     console.error('Registration error details:', {
-        //     name: err.name,
-        //     message: err.message,
-        //     stack: err.stack,
-        //     body: req.body
-        //     });
-        //     next(new AppError(err.message || 'Error registering user', 500));
-        // }
-        // };
 
 // @desc    Login user
 // @route   POST /api/v1/auth/login
@@ -177,12 +135,25 @@ export const login = async (req, res, next) => {
     // Check for user
     const user = await User.findOne({ email }).select('+password');
 
+    logger.debug('Login attempt:', {
+        email,
+        userFound: !!user,
+        hasPassword: user?.password ? 'yes' : 'no',
+        isVerified: user?.isEmailVerified
+    })
+
     if (!user) {
       return next(new AppError('Invalid credentials', 401));
     }
 
     // Check if password matches
     const isMatch = await user.matchPassword(password);
+
+    logger.debug('Password check:', {
+        passwordProvided: password,
+        hashedPassword: user.password,
+        passwordMatches: isMatch
+    })
 
     if (!isMatch) {
       return next(new AppError('Invalid credentials', 401));
@@ -193,7 +164,7 @@ export const login = async (req, res, next) => {
     }
 
     // Create refresh token
-    const refreshToken = user.generateRefreshToken();
+    const refreshToken = user.getRefreshToken();
     user.refreshToken = refreshToken;
     await user.save();
 
@@ -224,7 +195,8 @@ export const verifyEmail = async (req, res, next) => {
     });
 
     if (!user) {
-      return next(new AppError('Invalid token', 400));
+        logger.warn('Invalid or expired verification token:', token);
+        return next(new AppError('Invalid of expired verification token', 400));
     }
 
     // Set email as verified
@@ -234,11 +206,18 @@ export const verifyEmail = async (req, res, next) => {
 
     await user.save();
 
-    logger.info('Email verified successfully:', { email: user.email });
-    res.status(200).json({
-      success: true,
-      message: 'Email verified successfully'
-    });
+    logger.info('Email verified successfully:', user.email );
+    
+    // Redirect to frontend or return success response
+    if (req.accepts('html')) {
+        // If accessed via browser, redirect to frontend
+        res.redirect(`${config.corsOrigin}/login?verified=true`);
+    } else {
+        res.status(200).json({
+            success: true,
+            message: 'Email verified successfully'
+        });
+    }
   } catch (err) {
     logger.error('Email verification error:', err);
     next(new AppError('Error verifying email', 500));
@@ -283,66 +262,160 @@ export const refreshToken = async (req, res, next) => {
         next(new AppError('Error refreshing token', 500));
     }
 };
+// @desc    Resend verification email
+// @route   POST /api/v1/auth/resend-verification
+// @access  Private
+export const resendVerification = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user.id);
 
-// // @desc    Refresh token
-// // @route   POST /api/v1/auth/refresh-token
-// // @access  Public
-// export const refreshToken = async (req, res, next) => {
-//   try {
-//     debugRequest(req);
-    
-//     const { refreshToken } = req.body;
+        if (!user) {
+            return next(new AppError('User not found', 404));
+        }
 
-//     if (!refreshToken) {
-//       return next(new AppError('Please provide a refresh token', 400));
-//     }
+        if (user.isEmailVerified) {
+            return next(new AppError('Email already verified', 400));
+        }
 
-//     const user = await User.findOne({ refreshToken });
+        // Generate new verification token
+        const verificationToken = user.getEmailVerificationToken();
+        await user.save();
 
-//     if (!user) {
-//       return next(new AppError('Invalid refresh token', 401));
-//     }
+        // Create verification url
+        const verificationUrl = `${config.clientUrl}/verify-email?token=${verificationToken}`;
+        const message = `Please verify your email by clicking on this link: \n\n ${verificationUrl}`;
 
-//     // Generate new tokens
-//     const token = user.getSignedJwtToken();
-//     const newRefreshToken = user.generateRefreshToken();
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: 'Email Verification',
+                message
+            });
 
-//     user.refreshToken = newRefreshToken;
-//     await user.save();
+            res.status(200).json({
+                success: true,
+                message: 'Verification email sent'
+            });
+        } catch (error) {
+            user.emailVerificationToken = undefined;
+            user.emailVerificationExpire = undefined;
+            await user.save();
 
-//     res.status(200).json({
-//       success: true,
-//       token,
-//       refreshToken: newRefreshToken
-//     });
-//   } catch (err) {
-//     logger.error('Token refresh error:', err);
-//     next(new AppError('Error refreshing token', 500));
-//   }
-// };
+            return next(new AppError('Email could not be sent', 500));
+        }
+    } catch (err) {
+        next(new AppError('Error resending verification email', 500));
+    }
+};
 
+// @desc    Reset password request
+// @route   POST /api/v1/auth/reset-password-request
+// @access  Public
+export const resetPasswordRequest = async (req, res, next) => {
+    try {
+        const user = await User.findOne({ email: req.body.email });
 
+        if (!user) {
+            return next(new AppError('User not found', 404));
+        }
 
-// // Helper function to send token response
-// const sendTokenResponse = (user, statusCode, res) => {
-//   const token = user.getSignedJwtToken();
-//   const refreshToken = user.refreshToken;
+        // Generate reset token
+        const resetToken = user.getResetPasswordToken();
+        await user.save();
 
-//   const options = {
-//     expires: new Date(Date.now() + config.jwtCookieExpire * 24 * 60 * 60 * 1000),
-//     httpOnly: true
-//   };
+        // Create reset url
+        const resetUrl = `${config.clientUrl}/reset-password?token=${resetToken}`;
+        const message = `You requested a password reset. Please click on this link to reset your password: \n\n ${resetUrl}`;
 
-//   if (config.nodeEnv === 'production') {
-//     options.secure = true;
-//   }
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: 'Password Reset Request',
+                message
+            });
 
-//   res
-//     .status(statusCode)
-//     .cookie('token', token, options)
-//     .json({
-//       success: true,
-//       token,
-//       refreshToken
-//     });
-// };
+            res.status(200).json({
+                success: true,
+                message: 'Password reset email sent'
+            });
+        } catch (error) {
+            user.resetPasswordToken = undefined;
+            user.resetPasswordExpire = undefined;
+            await user.save();
+
+            return next(new AppError('Email could not be sent', 500));
+        }
+    } catch (err) {
+        next(new AppError('Error requesting password reset', 500));
+    }
+};
+
+// @desc    Reset password
+// @route   POST /api/v1/auth/reset-password/:token
+// @access  Public
+export const resetPassword = async (req, res, next) => {
+    try {
+        // Get hashed token
+        const resetPasswordToken = crypto
+            .createHash('sha256')
+            .update(req.params.token)
+            .digest('hex');
+
+        const user = await User.findOne({
+            resetPasswordToken,
+            resetPasswordExpire: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return next(new AppError('Invalid or expired reset token', 400));
+        }
+
+        // Validate password
+        if (!req.body.password || req.body.password.length < 6) {
+            return next(new AppError('Password must be at least 6 characters', 400));
+        }
+
+        // Set new password
+        user.password = req.body.password;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Password reset successful'
+        });
+    } catch (err) {
+        next(new AppError('Error resetting password', 500));
+    }
+};
+
+// @desc    Change password
+// @route   POST /api/v1/auth/change-password
+// @access  Private
+export const changePassword = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user.id).select('+password');
+
+        // Check current password
+        if (!(await user.matchPassword(req.body.currentPassword))) {
+            return next(new AppError('Current password is incorrect', 401));
+        }
+
+        // Validate new password
+        if (!req.body.newPassword || req.body.newPassword.length < 6) {
+            return next(new AppError('New password must be at least 6 characters', 400));
+        }
+
+        // Set new password
+        user.password = req.body.newPassword;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Password changed successfully'
+        });
+    } catch (err) {
+        next(new AppError('Error changing password', 500));
+    }
+};
