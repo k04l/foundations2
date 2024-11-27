@@ -60,7 +60,7 @@ const App = () => {
               Welcome to Foundations
             </h1>
             <p className="text-gray-600 mb-4">
-              Please check your email for verification instructions.
+              Please login or create an account to continue.
             </p>
             <div className="space-x-4">
               <button
@@ -70,7 +70,7 @@ const App = () => {
                 }} 
                 className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
               >
-                Register Now
+                Register
               </button> 
               <button
                 onClick={() => navigate('/login')}

@@ -7,6 +7,20 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Check auth status on mount
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsAuthenticated(true);
+      // You could also verify the token here
+    }
+    setLoading(false);
+  };
+
   // Check if user is logged in on initial load
   useEffect(() => {
     const token = localStorage.getItem('token');
