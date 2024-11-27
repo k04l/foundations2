@@ -21,6 +21,11 @@ export const Login = () => {
     setStatus('submitting');
     setError('');
 
+    console.log('Attempting login with:', {
+        email: formData.email,
+        passwordLength: formData.password.length
+    });
+
     try {
       const response = await fetch('/api/v1/auth/login', {
         method: 'POST',
@@ -31,18 +36,23 @@ export const Login = () => {
         credentials: 'include'
       });
 
+      console.log('Login response status:', response.status);
       const data = await response.json();
+      console.log('Login response data:', data);
 
       if (response.ok) {
         setStatus('success');
+        console.log('Login successful, navigting to dashboard');
         // Navigate to dashboard
         window.history.pushState({}, '', '/dashboard');
         window.dispatchEvent(new PopStateEvent('popstate'));
       } else {
         setStatus('error');
         setError(data.error || 'Login failed');
+        console.error('Login failed:', data);
       }
     } catch (err) {
+      console.error('Login error:', err);
       setStatus('error');
       setError('Unable to login. Please try again later.');
     }

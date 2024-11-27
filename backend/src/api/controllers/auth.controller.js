@@ -87,6 +87,11 @@ export const register = async (req, res, next) => {
 
             // Create verification url
             const verificationUrl = `${config.clientUrl}/api/v1/auth/verify-email/${verificationToken}`;
+            logger.info('Verification token generated:', {
+                token: verificationToken,
+                url: verificationUrl
+            });
+
             const message = `Please verify your email by clicking on this link: \n\n ${verificationUrl}`;
 
             try {
@@ -122,59 +127,80 @@ export const register = async (req, res, next) => {
 // @route   POST /api/v1/auth/login
 // @access  Public
 export const login = async (req, res, next) => {
-  try {
-    debugRequest(req);
-
-    const { email, password } = req.body;
-
-    // Validate email & password
-    if (!email || !password) {
-      return next(new AppError('Please provide an email and password', 400));
+    try {
+      debugRequest(req);
+      
+      const { email, password } = req.body;
+  
+      // Validate email & password
+      if (!email || !password) {
+        return next(new AppError('Please provide an email and password', 400));
+      }
+  
+      // Check for user
+      const user = await User.findOne({ email }).select('+password');
+  
+      logger.debug('Login attempt:', {
+          email,
+          userFound: !!user,
+          hasPassword: user?.password ? 'yes' : 'no',
+          isVerified: user?.isEmailVerified
+      });
+  
+      if (!user) {
+        return next(new AppError('Invalid credentials', 401));
+      }
+  
+      logger.debug('Password comparison details:', {
+          passwordLength: password.length,
+          hashedPasswordLength: user.password?.length,
+          userDetails: {
+              id: user._id,
+              email: user.email,
+              createdAt: user.createdAt
+          }
+      });
+  
+      // Check if password matches
+      const isMatch = await user.matchPassword(password);
+  
+      logger.debug('Password check:', {
+          userEmail: user.email,
+          passwordProvided: password ? 'yes' : 'no',
+          hashedPasswordExists: user.password ? 'yes' : 'no',
+          passwordMatches: isMatch,
+      });
+  
+      if (!isMatch) {
+          logger.debug('Password match failed:', {
+              userEmail: user.email,
+              providedPasswordLength: password.length
+          });
+          return next(new AppError('Invalid credentials', 401));
+      }
+  
+      if (!user.isEmailVerified) {
+          return next(new AppError('Please verify your email first', 401));
+      }
+  
+      // Create refresh token
+      const refreshToken = user.getRefreshToken();
+      user.refreshToken = refreshToken;
+      await user.save();
+  
+      logger.info('User logged in successfully:', { email: user.email });
+      logger.debug('Login successful, generating tokens:', {
+          userId: user._id,
+          email: user.email,
+          isVerified: user.isEmailVerified
+      });
+      
+      await sendTokenResponse(user, 200, res);
+    } catch (err) {
+      logger.error('Login error:', err);
+      next(new AppError('Error logging in', 500));
     }
-
-    // Check for user
-    const user = await User.findOne({ email }).select('+password');
-
-    logger.debug('Login attempt:', {
-        email,
-        userFound: !!user,
-        hasPassword: user?.password ? 'yes' : 'no',
-        isVerified: user?.isEmailVerified
-    })
-
-    if (!user) {
-      return next(new AppError('Invalid credentials', 401));
-    }
-
-    // Check if password matches
-    const isMatch = await user.matchPassword(password);
-
-    logger.debug('Password check:', {
-        passwordProvided: password,
-        hashedPassword: user.password,
-        passwordMatches: isMatch
-    })
-
-    if (!isMatch) {
-      return next(new AppError('Invalid credentials', 401));
-    }
-
-    if (!user.isEmailVerified) {
-        return next(new AppError('Please verify your email first', 401));
-    }
-
-    // Create refresh token
-    const refreshToken = user.getRefreshToken();
-    user.refreshToken = refreshToken;
-    await user.save();
-
-    logger.info('User logged in successfully:', { email: user.email });
-    sendTokenResponse(user, 200, res);
-  } catch (err) {
-    logger.error('Login error:', err);
-    next(new AppError('Error logging in', 500));
-  }
-};
+  };
 
 // @desc    Verify email
 // @route   GET /api/v1/auth/verify-email/:token

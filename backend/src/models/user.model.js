@@ -43,11 +43,29 @@ const userSchema = new mongoose.Schema({
 
 // Encrypt password using bcrypt
 userSchema.pre('save', async function(next) {
+    console.log('Pre-save hook triggered:', {
+        isPasswordModified: this.isModified('password'),
+        passwordLength: this.password?.length
+    });
+
     if (!this.isModified('password')) {
         next();
+        return;
     }
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+
+    try {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(this.password, salt);
+        console.log('Password hashing:', {
+            originalLength: this.password?.length,
+            hashedLength: hashedPassword.length
+        });
+        this.password = hashedPassword;
+        next();
+    } catch (err) {
+        console.error('Password hashing error:', err);
+        next(err);
+    }
 });
 
 // Sign JWT and return
@@ -61,7 +79,26 @@ userSchema.methods.getSignedJwtToken = function() {
 
 // Match user entered password to hashed password in database
 userSchema.methods.matchPassword = async function(enteredPassword) {
-    return await bcrypt.compare(enteredPassword, this.password);
+    try {
+        console.log('matchPassword debug:', {
+            hasStoredPassword: !!this.password,
+            storedPasswordLength: this.password?.length,
+            enteredPasswordLength: enteredPassword?.length
+        });
+        
+        if (!this.password || !enteredPassword) {
+            console.error('Password comparison failed: Missing password data');
+            return false;
+        }
+
+        const isMatch = await bcrypt.compare(enteredPassword, this.password);
+        console.log('Password comparison result:', isMatch);
+        
+        return isMatch;
+    } catch (err) {
+        console.error('Password match error:', err);
+        return false;
+    }
 };
 
 // Generate refresh token

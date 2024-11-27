@@ -8,6 +8,7 @@ import {
   Login
 } from './features/auth';
 import { Dashboard } from './features/dashboard/components/Dashboard';
+import { ApiTester } from './features/debug/components/ApiTester';
 
 const App = () => {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -34,6 +35,8 @@ const App = () => {
         return <Login />;
       case '/dashboard':
         return <Dashboard />;
+      case '/api-tester':
+        return <ApiTester />;
       case '/verify-email':
         return (
           <>
