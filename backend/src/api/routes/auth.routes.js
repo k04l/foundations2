@@ -25,6 +25,31 @@ router.use((req, res, next) => {
     next();
 });
 
+// Development-only route for deleting test users
+if (process.env.NODE_ENV === 'development') {
+    router.delete('/delete-test-user/:email', async (req, res) => {
+        try {
+            const result = await User.deleteOne({ email: req.params.email });
+            if (result.deletedCount === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'User not found'
+                });
+            }
+            res.json({
+                success: true,
+                message: `User deleted: ${result.deletedCount} document(s) removed`
+            });
+        } catch (error) {
+            console.error('Delete test user error:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message
+            });
+        }
+    });
+}
+
 // Add this route temporarily for debugging
 router.get('/check-user/:email', async (req, res) => {
     try {

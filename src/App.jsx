@@ -5,10 +5,12 @@ import {
   EmailVerification,
   ResendVerification,
   Register,
-  Login
+  Login,
+  AuthProvider,
+  ProtectedRoute
 } from './features/auth';
 import { Dashboard } from './features/dashboard/components/Dashboard';
-import { ApiTester } from './features/debug/components/ApiTester';
+// import { ApiTester } from './features/debug/components/ApiTester';
 
 const App = () => {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -34,9 +36,13 @@ const App = () => {
       case '/login':
         return <Login />;
       case '/dashboard':
-        return <Dashboard />;
-      case '/api-tester':
-        return <ApiTester />;
+        return (
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        );
+      // case '/api-tester':
+      //   return <ApiTester />;
       case '/verify-email':
         return (
           <>
@@ -107,39 +113,41 @@ const App = () => {
   // };
 
   return (
-    <NavigationProvider>
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-white shadow-sm">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex justify-between items-center">
-              <h1 
-                onClick={() => navigate('/')}
-                className="text-xl font-semibold text-gray-800 cursor-pointer"
-              >
-                Foundations
-              </h1>
-            
-            {currentPath === '/dashboard' && (
-              <button
-                onClick={() => navigate('/')}
-                className="text-xl font-semibold text-gray-800 cursor-pointer"
-              >
-                Logout
-              </button>
-            )}
+    <AuthProvider>
+      <NavigationProvider>
+        <div className="min-h-screen bg-gray-50">
+          <header className="bg-white shadow-sm">
+            <div className="container mx-auto px-4 py-4">
+              <div className="flex justify-between items-center">
+                <h1 
+                  onClick={() => navigate('/')}
+                  className="text-xl font-semibold text-gray-800 cursor-pointer"
+                >
+                  Foundations
+                </h1>
+              
+              {currentPath === '/dashboard' && (
+                <button
+                  onClick={() => navigate('/')}
+                  className="text-xl font-semibold text-gray-800 cursor-pointer"
+                >
+                  Logout
+                </button>
+              )}
+              </div>
             </div>
-          </div>
-        </header>
-        <main className="container mx-auto px-4 py-8">
-          {renderContent()}
-        </main>
-        <footer className="bg-white border-t mt-auto">
-          <div className="container mx-auto px-4 py-4 text-center text-gray-600">
-            © 2024 Foundations. All rights reserved.
-          </div>
-        </footer>
-      </div>
-    </NavigationProvider>
+          </header>
+          <main className="container mx-auto px-4 py-8">
+            {renderContent()}
+          </main>
+          <footer className="bg-white border-t mt-auto">
+            <div className="container mx-auto px-4 py-4 text-center text-gray-600">
+              © 2024 Foundations. All rights reserved.
+            </div>
+          </footer>
+        </div>
+      </NavigationProvider>
+    </AuthProvider>
   );
 };
 

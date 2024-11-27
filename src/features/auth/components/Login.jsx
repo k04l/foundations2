@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useNavigation } from '../hooks/useNavigation';
+//import { set } from 'mongoose';
 
 export const Login = () => {
   const [formData, setFormData] = useState({
@@ -7,6 +10,8 @@ export const Login = () => {
   });
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
+  //const { login } = useAuth();
+  //const { navigate } = useNavigation();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -41,11 +46,21 @@ export const Login = () => {
       console.log('Login response data:', data);
 
       if (response.ok) {
+        // Store tokens
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('refreshToken', data.refreshToken);
+
         setStatus('success');
-        console.log('Login successful, navigting to dashboard');
+        console.log('Login successful, navigating to dashboard');
         // Navigate to dashboard
         window.history.pushState({}, '', '/dashboard');
         window.dispatchEvent(new PopStateEvent('popstate'));
+
+        // setStatus('success');
+        // console.log('Login successful, navigting to dashboard');
+        // // Navigate to dashboard
+        // window.history.pushState({}, '', '/dashboard');
+        // window.dispatchEvent(new PopStateEvent('popstate'));
       } else {
         setStatus('error');
         setError(data.error || 'Login failed');

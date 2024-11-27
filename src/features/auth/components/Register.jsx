@@ -23,6 +23,11 @@ export const Register = () => {
     setStatus('submitting');
     setError('');
 
+    console.log('Attempting registration with:', {  
+        ...formData,
+        password: '[redacted]'
+    });
+
     try {
       const response = await fetch('/api/v1/auth/register', {
         method: 'POST',
@@ -33,7 +38,9 @@ export const Register = () => {
         credentials: 'include'
       });
 
+      console.log('Registration response status:', response.status);
       const data = await response.json();
+      console.log('Registration response data:', data);
 
       if (response.ok) {
         setStatus('success');
@@ -42,6 +49,7 @@ export const Register = () => {
         setError(data.message || 'Registration failed');
       }
     } catch (err) {
+      console.error('Registration error:', err);
       setStatus('error');
       setError('Unable to register. Please try again later.');
     }
