@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- Background circle -->
+  <circle cx="200" cy="200" r="190" fill="#0A0F1C"/>
+  
+  <!-- Spiral wave elements -->
+  <path d="M200 200 
+           A100,100 0 0,1 300,200 
+           A100,100 0 0,1 200,300 
+           A100,100 0 0,1 100,200 
+           A100,100 0 0,1 200,100" 
+        fill="none" 
+        stroke="url(#blueGradient)" 
+        stroke-width="20"
+        stroke-linecap="round">
+    <animateTransform
+      attributeName="transform"
+      type="rotate"
+      from="0 200 200"
+      to="360 200 200"
+      dur="20s"
+      repeatCount="indefinite"/>
+  </path>
+  
+  <!-- Gears -->
+  <g transform="translate(320,180)">
+    <path d="M0,-20 L5,-5 L20,-5 L25,0 L20,5 L5,5 L0,20 L-5,5 L-20,5 L-25,0 L-20,-5 L-5,-5 Z" 
+          fill="#E6F0FF">
+      <animateTransform
+        attributeName="transform"
+        type="rotate"
+        from="0"
+        to="360"
+        dur="10s"
+        repeatCount="indefinite"/>
+    </path>
+  </g>
+  <g transform="translate(340,220)">
+    <path d="M0,-15 L4,-4 L15,-4 L19,0 L15,4 L4,4 L0,15 L-4,4 L-15,4 L-19,0 L-15,-4 L-4,-4 Z" 
+          fill="#E6F0FF">
+      <animateTransform
+        attributeName="transform"
+        type="rotate"
+        from="360"
+        to="0"
+        dur="8s"
+        repeatCount="indefinite"/>
+    </path>
+  </g>
+  
+  <!-- Water droplets -->
+  <circle cx="60" cy="60" r="10" fill="#3385FF" opacity="0.8">
+    <animate
+      attributeName="opacity"
+      values="0.8;0.4;0.8"
+      dur="3s"
+      repeatCount="indefinite"/>
+  </circle>
+  <circle cx="90" cy="40" r="8" fill="#3385FF" opacity="0.6">
+    <animate
+      attributeName="opacity"
+      values="0.6;0.3;0.6"
+      dur="4s"
+      repeatCount="indefinite"/>
+  </circle>
+  <circle cx="40" cy="90" r="6" fill="#3385FF" opacity="0.4">
+    <animate
+      attributeName="opacity"
+      values="0.4;0.2;0.4"
+      dur="5s"
+      repeatCount="indefinite"/>
+  </circle>
+  
+  <!-- Gradients -->
+  <defs>
+    <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0066FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3385FF;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>

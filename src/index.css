@@ -1,68 +1,60 @@
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+/* Custom base styles */
+@layer base {
+  body {
+    @apply bg-dark-primary text-gray-100 antialiased;
   }
-  a:hover {
-    color: #747bff;
+}
+
+/* Custom component classes */
+@layer components {
+  .bernoullia-card {
+    @apply bg-dark-secondary/80 backdrop-blur-md border border-bernoullia-500/20 
+           rounded-xl transition-all duration-300 hover:border-bernoullia-400/40 
+           hover:shadow-lg hover:shadow-bernoullia-500/10;
   }
-  button {
-    background-color: #f9f9f9;
+
+  .bernoullia-button {
+    @apply px-4 py-2 bg-bernoullia-500 text-white rounded-lg 
+           hover:bg-bernoullia-400 transition-colors duration-200
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
+
+  .bernoullia-link {
+    @apply text-bernoullia-400 hover:text-bernoullia-300 
+           transition-colors duration-200;
+  }
+}
+
+/* Gradient text effect */
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r 
+         from-bernoullia-300 to-bernoullia-500 
+         animate-gradient;
+}
+
+/* Background patterns */
+.bg-grid {
+  background-image: radial-gradient(circle at 1px 1px, rgb(45, 55, 72) 2px, transparent 0);
+  background-size: 30px 30px;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-dark-primary;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-bernoullia-500/50 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-bernoullia-500/70;
 }
