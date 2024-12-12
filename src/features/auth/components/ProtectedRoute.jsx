@@ -1,3 +1,4 @@
+// src/features/auth/components/ProtectedRoute.jsx
 import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useAuth } from '..//hooks/useAuth';

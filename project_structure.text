@@ -23,7 +23,6 @@
       - routes
         - auth.routes.js
         - routes.js
-      - validators
     - app.js
     - config
       - database.js
@@ -35,11 +34,16 @@
     - models
       - user.model.js
     - server.js
-    - services
     - utils
       - email.js
       - logger.js
   - test-server.js
+- dist
+  - assets
+    - index-kQJbKSsj.css
+    - index-y6Zl0Loz.js
+  - index.html
+  - vite.svg
 - eslint.config.js
 - index.html
 - package-lock.json
@@ -52,6 +56,35 @@
   - App.jsx
   - assets
     - react.svg
+  - features
+    - auth
+      - components
+        - alert.jsx
+        - EmailVerification.jsx
+        - Login.jsx
+        - ProtectedRoute.jsx
+        - Register.jsx
+        - ResendVerification.jsx
+      - context
+        - AuthContext.jsx
+        - NavigationContext.jsx
+      - hooks
+        - useAuth.js
+        - useNavigation.js
+      - index.js
+      - providers
+        - AuthProvider.jsx
+      - types
+        - auth.types.js
+    - dashboard
+      - components
+        - Dashboard.jsx
+    - debug
+      - components
+        - ApiTester.jsx
   - index.css
+  - lib
+    - utils.js
   - main.jsx
+- tailwind.config.js
 - vite.config.js
