@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '..//hooks/useAuth';
 import { useNavigation } from '../hooks/useNavigation';
 
 export const ProtectedRoute = ({ children }) => {

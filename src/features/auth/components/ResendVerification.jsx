@@ -1,6 +1,6 @@
 // src/features/auth/components/ResendVerification.jsx
 import { useState } from 'react';
-import { Alert, AlertDescription, AlertTitle } from '../../../components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from './alert';
 // import { Mail, AlertCircle, Check } from 'lucide-react';
 
 const MailIcon = () => (

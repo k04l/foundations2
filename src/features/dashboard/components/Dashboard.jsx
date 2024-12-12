@@ -1,4 +1,4 @@
-import { useAuth } from '../../auth/context/AuthContext';
+import { useAuth } from '../../auth/hooks/useAuth';
 import { useNavigation } from '../../auth/hooks/useNavigation';
 
 export const Dashboard = () => {
