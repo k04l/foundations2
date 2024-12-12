@@ -38,6 +38,7 @@
       - email.js
       - logger.js
   - test-server.js
+- bernoullia-logo.png
 - dist
   - assets
     - index-kQJbKSsj.css
@@ -56,6 +57,9 @@
   - App.jsx
   - assets
     - react.svg
+  - bernoullia-logo.svg
+  - components
+    - Logo.jsx
   - features
     - auth
       - components
@@ -64,7 +68,9 @@
         - Login.jsx
         - ProtectedRoute.jsx
         - Register.jsx
+        - RequestPasswordReset.jsx
         - ResendVerification.jsx
+        - ResetPassword.jsx
       - context
         - AuthContext.jsx
         - NavigationContext.jsx
@@ -82,9 +88,19 @@
     - debug
       - components
         - ApiTester.jsx
+    - home
+      - components
+        - AppIcon.jsx
+        - BackgroundPattern.jsx
+        - HomePage.jsx
+        - UserDropdown.jsx
+      - index.js
   - index.css
   - lib
     - utils.js
   - main.jsx
+  - styles
+    - Logo.module.css
+- stylelint.config.js
 - tailwind.config.js
 - vite.config.js
