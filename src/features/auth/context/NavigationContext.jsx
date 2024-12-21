@@ -7,16 +7,18 @@ export const NavigationProvider = ({ children }) => {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
 
   useEffect(() => {
-    const handleNavigation = () => {
+    const handlePopState = () => {
       setCurrentPath(window.location.pathname);
     };
 
-    window.addEventListener('popstate', handleNavigation);
-    return () => window.removeEventListener('popstate', handleNavigation);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   const navigate = (path) => {
+    // Update the URL
     window.history.pushState({}, '', path);
+    // Update our path state
     setCurrentPath(path);
   };
 

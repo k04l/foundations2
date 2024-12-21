@@ -1,5 +1,5 @@
 // src/App.jsx
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { 
   NavigationProvider,
   EmailVerification,
@@ -14,30 +14,14 @@ import { AuthProvider } from './features/auth/providers/AuthProvider';
 import { useAuth } from './features/auth/hooks/useAuth';
 import { Dashboard } from './features/dashboard/components/Dashboard';
 import { HomePage } from './features/home/components/HomePage';
-import { Home } from 'lucide-react'; // Add this import for the home icon
+import { Home } from 'lucide-react';
+import Profile from './features/profile/components/Profile';
+import { useNavigation } from './features/auth/hooks/useNavigation';
 
 const AppContent = () => {
-  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+  // Get navigation context values properly
+  const { currentPath, navigate } = useNavigation();
   const { isAuthenticated, logout } = useAuth();
-
-  useEffect(() => {
-    const handleLocationChange = () => {
-      setCurrentPath(window.location.pathname);
-    };
-
-    window.addEventListener('popstate', handleLocationChange);
-    return () => window.removeEventListener('popstate', handleLocationChange);
-  }, []);
-
-  const navigate = (path) => {
-    window.history.pushState({}, '', path);
-    setCurrentPath(path);
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   // Helper function to render the header with navigation
   const renderHeader = () => {
@@ -78,7 +62,10 @@ const AppContent = () => {
               )}
               {isAuthenticated && (
                 <button
-                  onClick={handleLogout}
+                  onClick={() => {
+                    logout();
+                    navigate('/login');
+                  }}
                   className="px-4 py-2 text-blue-400 hover:text-blue-300 hover:bg-blue-800/50 rounded-lg transition-colors"
                 >
                   Logout
@@ -93,17 +80,33 @@ const AppContent = () => {
 
   // Render different content based on current path
   const renderContent = () => {
+    console.log('Current path:', currentPath); // Debug log
+    
     switch (currentPath) {
       case '/':
         return <HomePage />;
       case '/register':
-        return isAuthenticated ? navigate('/dashboard') : <Register />;
+        if (isAuthenticated) {
+          navigate('/dashboard');
+          return null;
+        }
+        return <Register />;
       case '/login':
-        return isAuthenticated ? navigate('/dashboard') : <Login />;
+        if (isAuthenticated) {
+          navigate('/dashboard');
+          return null;
+        }
+        return <Login />;
       case '/dashboard':
         return (
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        );
+      case '/profile':
+        return (
+          <ProtectedRoute>
+            <Profile />
           </ProtectedRoute>
         );
       case '/reset-password-request':
@@ -120,7 +123,6 @@ const AppContent = () => {
             <ResendVerification />
           </div>
         );
-        // Redirect to home for unknown routes
       default:
         navigate('/');
         return null;

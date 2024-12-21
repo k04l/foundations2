@@ -1,3 +1,5 @@
+// src/features/dashboard/components/Dashboard.jsx
+
 import React, { useState } from 'react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useNavigation } from '../../auth/hooks/useNavigation';
@@ -32,6 +34,7 @@ export const Dashboard = () => {
   ];
 
   const handleCompleteProfile = () => {
+    const { navigate } = useNavigation();
     navigate('/profile');
   };
 
