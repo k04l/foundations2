@@ -334,24 +334,39 @@ export const resendVerification = async (req, res, next) => {
     }
 };
 
-// @desc    Reset password request
+// @desc    Handle password reset request
 // @route   POST /api/v1/auth/reset-password-request
 // @access  Public
 export const resetPasswordRequest = async (req, res, next) => {
     try {
         const user = await User.findOne({ email: req.body.email });
-
+        
+        // Always return success even if user not found (security best practice)
         if (!user) {
-            return next(new AppError('User not found', 404));
+            return res.status(200).json({
+                success: true,
+                message: 'If an account exists with this email, you will receive a password reset link'
+            });
         }
 
         // Generate reset token
-        const resetToken = user.getResetPasswordToken();
+        const resetToken = crypto.randomBytes(20).toString('hex');
+        
+        // Hash token and set to resetPasswordToken field
+        user.resetPasswordToken = crypto
+            .createHash('sha256')
+            .update(resetToken)
+            .digest('hex');
+
+        // Set expire
+        user.resetPasswordExpire = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+        
         await user.save();
 
         // Create reset url
         const resetUrl = `${config.clientUrl}/reset-password?token=${resetToken}`;
-        const message = `You requested a password reset. Please click on this link to reset your password: \n\n ${resetUrl}`;
+
+        const message = `You requested a password reset. Please click on this link to reset your password: \n\n ${resetUrl}\n\nThis link will expire in 24 hours.\n\nIf you didn't request this, please ignore this email.`;
 
         try {
             await sendEmail({
@@ -364,14 +379,16 @@ export const resetPasswordRequest = async (req, res, next) => {
                 success: true,
                 message: 'Password reset email sent'
             });
-        } catch (error) {
+        } catch (err) {
             user.resetPasswordToken = undefined;
             user.resetPasswordExpire = undefined;
             await user.save();
 
+            logger.error('Password reset email error:', err);
             return next(new AppError('Email could not be sent', 500));
         }
     } catch (err) {
+        logger.error('Password reset request error:', err);
         next(new AppError('Error requesting password reset', 500));
     }
 };
@@ -381,11 +398,20 @@ export const resetPasswordRequest = async (req, res, next) => {
 // @access  Public
 export const resetPassword = async (req, res, next) => {
     try {
+        // Get raw token from params
+        const rawToken = req.params.token;
+
         // Get hashed token
         const resetPasswordToken = crypto
             .createHash('sha256')
-            .update(req.params.token)
+            .update(rawToken)
             .digest('hex');
+
+        // Log the token comparison for debugging
+        logger.debug('Reset Password Request:', {
+            rawToken,
+            hashedToken: resetPasswordToken
+        });
 
         const user = await User.findOne({
             resetPasswordToken,
@@ -393,25 +419,43 @@ export const resetPassword = async (req, res, next) => {
         });
 
         if (!user) {
+            logger.error('Reset password failed: Invalid or expired token', {
+                providedToken: resetPasswordToken,
+            });
             return next(new AppError('Invalid or expired reset token', 400));
         }
 
-        // Validate password
-        if (!req.body.password || req.body.password.length < 6) {
-            return next(new AppError('Password must be at least 6 characters', 400));
-        }
+        // Log successful user fiind
+        logger.debug('Found user for password reset:', {
+            userId: user._id,
+            tokenExpiry: user.resetPasswordExpire
+        });
 
         // Set new password
         user.password = req.body.password;
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;
+        
         await user.save();
+
+        // Send confirmation email
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: 'Password Reset Confirmation',
+                message: 'Your password has been successfully reset. If you did not make this change, please contact support immediately.'
+            });
+        } catch (err) {
+            logger.error('Password reset confirmation email error:', err);
+            // Continue with the response even if confirmation email fails
+        }
 
         res.status(200).json({
             success: true,
             message: 'Password reset successful'
         });
     } catch (err) {
+        logger.error('Password reset error:', err);
         next(new AppError('Error resetting password', 500));
     }
 };

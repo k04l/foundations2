@@ -106,6 +106,10 @@ const AppContent = () => {
             <Dashboard />
           </ProtectedRoute>
         );
+      case '/reset-password-request':
+        return <RequestPasswordReset />;
+      case '/reset-password':
+        return <ResetPassword />;
       case '/verify-email':
         return (
           <div className="max-w-md mx-auto">
@@ -116,12 +120,8 @@ const AppContent = () => {
             <ResendVerification />
           </div>
         );
-      case '/reset-password-request':
-        return <RequestPasswordReset />;
-      case '/reset-password':
-        return <ResetPassword />;
-      default:
         // Redirect to home for unknown routes
+      default:
         navigate('/');
         return null;
     }

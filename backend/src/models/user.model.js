@@ -35,6 +35,8 @@ const userSchema = new mongoose.Schema({
     emailVerificationToken: String,
     emailVerificationExpire: Date,
     refreshToken: String,
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
     createdAt: {
         type: Date,
         default: Date.now
@@ -130,5 +132,21 @@ userSchema.methods.getEmailVerificationToken = function() {
 
     return verificationToken;
 };
+
+userSchema.methods.createPasswordResetToken = function() {
+    // Generate token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    // Hash token and set to resetPasswordToken field
+    this.resetPasswordToken = crypto
+        .createHash('sha256')
+        .update(resetToken)
+        .digest('hex');
+
+    // Set expire to 24 hours
+    this.resetPasswordExpire = Date.now() + 24 * 60 * 60 * 1000;
+
+    return resetToken;
+}
 
 export default mongoose.model('User', userSchema);

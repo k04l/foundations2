@@ -90,7 +90,7 @@ export const HomePage = () => {
             <div className="w-8 h-[2px] bg-blue-500 mr-3"></div>
             Learn & Grow
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-3 md:grid-cols-4 gap-6">
             <AppIcon 
               icon={BookOpen} 
               label="Courses" 
@@ -124,7 +124,7 @@ export const HomePage = () => {
             <div className="w-8 h-[2px] bg-blue-500 mr-3"></div>
             Community
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-3 md:grid-cols-4 gap-6">
             <AppIcon 
               icon={Users} 
               label="Network" 

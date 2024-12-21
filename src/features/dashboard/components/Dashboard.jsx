@@ -17,7 +17,6 @@ import {
 
 export const Dashboard = () => {
   // Preserve existing authentication and navigation
-  const { logout } = useAuth();
   const { navigate } = useNavigation();
   
   // Sample data - in a real app, this would come from your backend
@@ -31,11 +30,6 @@ export const Dashboard = () => {
     { title: 'MEP Coordination Meeting', date: '2024-12-15', time: '10:00 AM' },
     { title: 'BIM Training Session', date: '2024-12-18', time: '2:00 PM' }
   ];
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   const handleCompleteProfile = () => {
     navigate('/profile');
@@ -59,13 +53,6 @@ export const Dashboard = () => {
             </button>
             <button className="p-2 rounded-lg hover:bg-gray-800 text-blue-300">
               <Calendar className="h-5 w-5" />
-            </button>
-            <button
-              onClick={handleLogout}
-              className="flex items-center px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
             </button>
           </div>
         </div>

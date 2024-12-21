@@ -33,10 +33,16 @@ export const RequestPasswordReset = () => {
         setError(data.error || 'Failed to send reset email');
       }
     } catch (err) {
-      setError('An unexpected error occurred');
+      setError(err.message || 'An unexpected error occurred');
     } finally {
       setStatus('idle');
     }
+  };
+
+  // Handle navigation to login page
+  const handleBackToLogin = () => {
+    window.history.pushState({}, '', '/login');
+    window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
   if (success) {
@@ -47,7 +53,7 @@ export const RequestPasswordReset = () => {
           If an account exists for {email}, you'll receive a password reset link shortly.
         </p>
         <button
-          onClick={() => navigate('/login')}
+          onClick={handleBackToLogin}
           className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-blue-100 rounded-lg hover:bg-blue-500 transition-colors"
         >
           <ArrowLeft className="mr-2" size={16} />
@@ -94,7 +100,7 @@ export const RequestPasswordReset = () => {
 
         <button
           type="button"
-          onClick={() => navigate('/login')}
+          onClick={handleBackToLogin}
           className="w-full flex items-center justify-center px-4 py-2 text-blue-300 hover:text-blue-200 transition-colors"
         >
           <ArrowLeft className="mr-2" size={16} />
