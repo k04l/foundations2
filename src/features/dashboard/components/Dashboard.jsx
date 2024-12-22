@@ -20,6 +20,7 @@ import {
 export const Dashboard = () => {
   // Preserve existing authentication and navigation
   const { navigate } = useNavigation();
+  const { user } = useAuth();
   
   // Sample data - in a real app, this would come from your backend
   const recentActivity = [
@@ -34,8 +35,7 @@ export const Dashboard = () => {
   ];
 
   const handleCompleteProfile = () => {
-    const { navigate } = useNavigation();
-    navigate('/profile');
+    navigate('/profile/edit');
   };
 
   const handleExploreFeatures = () => {
