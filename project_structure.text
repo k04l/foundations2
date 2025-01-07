@@ -20,8 +20,10 @@
     - api
       - controllers
         - auth.controller.js
+        - profile.controller.js
       - routes
         - auth.routes.js
+        - profile.routes.js
         - routes.js
     - app.js
     - config
@@ -32,12 +34,17 @@
       - error.middleware.js
       - logger.middleware.js
     - models
+      - profile.model.js
       - user.model.js
     - server.js
     - utils
       - email.js
       - logger.js
   - test-server.js
+- backup
+  - your-database
+    - users.bson
+    - users.metadata.json
 - bernoullia-logo.png
 - dist
   - assets
@@ -60,6 +67,9 @@
   - bernoullia-logo.svg
   - components
     - Logo.jsx
+    - ui
+      - alert.jsx
+      - card.jsx
   - features
     - auth
       - components
@@ -95,6 +105,12 @@
         - HomePage.jsx
         - UserDropdown.jsx
       - index.js
+    - profile
+      - components
+        - ProfileEdit.jsx
+        - ProfileView.jsx
+      - hooks
+        - userProfile.js
   - index.css
   - lib
     - utils.js

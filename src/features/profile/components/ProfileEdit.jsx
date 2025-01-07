@@ -1,6 +1,6 @@
 // src/features/profile/components/ProfileEdit.jsx
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
 import { Alert, AlertDescription } from '../../../components/ui/alert';
 import { AlertCircle, Save, Upload, X, Crop, Move } from 'lucide-react';
@@ -9,10 +9,12 @@ import Cropper from 'react-easy-crop';
 import imageCompression from 'browser-image-compression';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useNavigation } from '../../auth/hooks/useNavigation';
+import { useProfile } from '../hooks/useProfile';
 
 const ProfileEdit = () => {
   const { user } = useAuth();
   const { navigate } = useNavigation();
+  const { updateProfile, fetchProfile, loading: profileLoading, error: profileError } = useProfile();
 
   // Form state management
   const [formData, setFormData] = useState({
@@ -40,6 +42,24 @@ const ProfileEdit = () => {
   const [zoom, setZoom] = useState(1);
   const [isCropping, setIsCropping] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
+
+  // Add useEffect to fetch existing profile data
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (user?.id) {
+        const result = await fetchProfile(user.id);
+        if (result.success) {
+          // Update form data with existing profile data
+          setFormData(prevData => ({
+            ...prevData,
+            ...result.data
+          }));
+        }
+      }
+    };
+    
+    loadProfile();
+  }, [user, fetchProfile]);
 
   // Event Handlers
   const handleChange = (e) => {
@@ -92,13 +112,17 @@ const ProfileEdit = () => {
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
 
-  // Create final cropped image
+  // Update the createFinalImage function:
   const createFinalImage = async () => {
     try {
+      if (!imagePreview || !croppedAreaPixels) {
+        throw new Error('Image or crop area not available');
+      }
+
       const canvas = document.createElement('canvas');
       const image = new Image();
       image.src = imagePreview;
-      
+
       await new Promise((resolve) => {
         image.onload = resolve;
       });
@@ -108,7 +132,7 @@ const ProfileEdit = () => {
       canvas.height = croppedAreaPixels.height;
 
       const ctx = canvas.getContext('2d');
-      
+
       // Draw cropped image
       ctx.drawImage(
         image,
@@ -123,13 +147,12 @@ const ProfileEdit = () => {
       );
 
       // Convert to blob
-      const croppedImage = await new Promise(resolve => {
+      return new Promise((resolve) => {
         canvas.toBlob(resolve, 'image/jpeg', 0.9);
       });
-
-      return croppedImage;
     } catch (err) {
-      throw new Error('Error creating final image: ' + err.message);
+      console.error('Error creating final image:', err);
+      throw new Error('Failed to process image');
     }
   };
 
@@ -140,44 +163,71 @@ const ProfileEdit = () => {
     setSaveProgress(0);
     
     try {
-      // Create FormData for submission
-      const submitData = new FormData();
-      
-      // Add form fields
-      Object.entries(formData).forEach(([key, value]) => {
-        submitData.append(key, value);
-      });
+      // Create a copy of the form data
+      const profileUpdateData = { ...formData };
 
       // Process image if exists
       if (imageFile && croppedAreaPixels) {
-        const finalImage = await createFinalImage();
-        submitData.append('profilePicture', finalImage, 'profile.jpg');
+        try {
+          const finalImageFile = await createFinalImage();
+          // Convert blob to File object
+          const imageFile = new File([finalImageFile], 'profile-image.jpg', {
+            type: 'image/jpeg',
+            lastModified: Date.now()
+          });
+          profileUpdateData.profilePicture = imageFile;
+        } catch (imageError) {
+          console.error('Error processing image:', imageError);
+          setError('Failed to process profile picture');
+          setStatus('error');
+          return;
+        }
       }
+  
+      // Log data being sent
+      console.log('Submitting profile update with:', profileUpdateData);
 
-      // TODO: Replace with actual API call
-      const mockApiCall = async () => {
-        await new Promise(resolve => {
-          let progress = 0;
-          const interval = setInterval(() => {
-            progress += 10;
-            setSaveProgress(progress);
-            if (progress >= 100) {
-              clearInterval(interval);
-              resolve();
-            }
-          }, 200);
-        });
-      };
+      const result = await updateProfile(profileUpdateData);
 
-      await mockApiCall();
-      setStatus('success');
-      // After successful save, redirect to profile view
-      navigate(`/profile/${user.id}`);
+      if (result.success) {
+        setStatus('success');
+        // Add a small delay before navigation
+        setTimeout(() => {
+          navigate(`/profile/${user.id}`);
+        }, 100);
+      } else {
+        setStatus('error');
+        setError(result.error || 'Failed to update profile');
+      }
     } catch (err) {
+      console.error('Profile update error:', err);
       setStatus('error');
       setError(err.message || 'Failed to update profile');
     }
   };
+
+  //     // Create profile data object
+  //     const profileData = {
+  //       ...formData,
+  //       profilePicture: finalImageFile
+  //     };
+  
+  //     const result = await updateProfile(profileData);
+  
+  //     if (result.success) {
+  //       setStatus('success');
+  //       setTimeout(() => {
+  //         navigate(`/profile/${user.id}`);
+  //       }, 100);
+  //     } else {
+  //       setStatus('error');
+  //       setError(result.error || 'Failed to update profile');
+  //     }
+  //   } catch (err) {
+  //     setStatus('error');
+  //     setError(err.message || 'Failed to update profile');
+  //   }
+  // };
 
   return (
     <div className="max-w-4xl mx-auto">

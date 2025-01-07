@@ -41,6 +41,22 @@ const Header = () => {
   // Don't show header on homepage
   if (currentPath === '/') return null;
 
+  // Profile navigation handler
+  const handleProfileNavigation = () => {
+    setDropdownOpen(false);
+
+    if (!user?.id) {
+      console.warn('No user ID found for profile navigation');
+      return;
+    }
+
+    // Log navigation attemp for debugging
+    console.log('Attempting to navigate to profile:', user.id);
+
+    // Use the correct profile path
+    navigate(`/profile/${user.id}`);
+  }
+
   return (
     <header className="bg-gray-900/80 backdrop-blur-md shadow-lg border-b border-blue-500/20">
       <div className="container mx-auto px-4 py-4">
@@ -90,13 +106,7 @@ const Header = () => {
                     <div className="py-1">
                       {/* Profile Link - View Mode */}
                       <button
-                        onClick={() => {
-                          setDropdownOpen(false);
-                          // Ensure we have a user ID before navigation
-                          if (user?.id) {
-                            navigate(`/profile/${user.id}`);
-                          }
-                        }}
+                        onClick={handleProfileNavigation}
                         className="flex items-center w-full px-4 py-2 text-sm text-blue-300 hover:bg-gray-700"
                       >
                         <User className="w-4 h-4 mr-2" />
@@ -160,6 +170,16 @@ const AppContent = () => {
       if (userId) {
         return <ProfileView userId={userId} />;
       }
+
+      // Default to current user's profile if no ID is provided
+      if (user?.id) {
+        navigate(`/profile/${user.id}`);
+        return null;
+      }
+
+      // If no user is logged in, redirect to login
+      navigate('/login');
+      return null;
     }
 
     // Handle standard routes

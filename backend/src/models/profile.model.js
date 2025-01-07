@@ -30,19 +30,17 @@ const profileSchema = new mongoose.Schema({
   
   // Skills and Expertise
   specializations: [{
-    type: String,
-    trim: true
+    type: [String],
+    trim: true,
+    default: []
   }],
-  certifications: [{
+  certifications: {
     name: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    issueDate: Date,
-    expiryDate: Date,
-    issuingBody: String
-  }],
+      type: [String],
+      trim: true,
+      default: []
+    }
+  },
 
   // Detailed Information
   bio: {
@@ -65,33 +63,33 @@ const profileSchema = new mongoose.Schema({
   },
 
   // Social Media Links
-  socialLinks: {
-    linkedin: {
-      type: String,
-      trim: true,
-      validate: {
-        validator: function(v) {
-          return !v || v.startsWith('https://linkedin.com/') || v.startsWith('https://www.linkedin.com/');
-        },
-        message: 'Please provide a valid LinkedIn URL'
-      }
+  
+  linkedin: {
+    type: String,
+    trim: true,
+    validate: {
+    validator: function(v) {
+        return !v || v.startsWith('https://linkedin.com/') || v.startsWith('https://www.linkedin.com/');
     },
-    twitter: {
-      type: String,
-      trim: true,
-      validate: {
-        validator: function(v) {
-          return !v || v.startsWith('https://twitter.com/') || v.startsWith('https://x.com/');
-        },
-        message: 'Please provide a valid Twitter/X URL'
-      }
+    message: 'Please provide a valid LinkedIn URL'
+    }
+  },
+  twitter: {
+    type: String,
+    trim: true,
+    validate: {
+    validator: function(v) {
+        return !v || v.startsWith('https://twitter.com/') || v.startsWith('https://x.com/');
+    },
+    message: 'Please provide a valid Twitter/X URL'
     }
   },
 
   // Profile Picture
   profilePicture: {
     url: String,
-    publicId: String  // For cloud storage reference (e.g., Cloudinary)
+    publicId: String,  // For cloud storage reference (e.g., Cloudinary)
+    name: String
   },
 
   // Profile Completion and Privacy
@@ -132,6 +130,7 @@ const profileSchema = new mongoose.Schema({
 // Middleware to update lastUpdated timestamp
 profileSchema.pre('save', function(next) {
   this.lastUpdated = Date.now();
+  this.calculateCompletionStatus();
   next();
 });
 
@@ -149,7 +148,6 @@ profileSchema.methods.calculateCompletionStatus = function() {
   const completedFields = requiredFields.filter(field => {
     const value = this[field];
     return value && (
-      (Array.isArray(value) && value.length > 0) ||
       (typeof value === 'object' && value.url) ||
       (typeof value === 'string' && value.trim().length > 0) ||
       (typeof value === 'number' && value > 0)
@@ -161,10 +159,10 @@ profileSchema.methods.calculateCompletionStatus = function() {
 };
 
 // Virtual populate for associated projects (if you implement project functionality later)
-profileSchema.virtual('projects', {
-  ref: 'Project',
-  localField: '_id',
-  foreignField: 'profile'
-});
+// profileSchema.virtual('projects', {
+//   ref: 'Project',
+//   localField: '_id',
+//   foreignField: 'profile'
+// });
 
 export default mongoose.model('Profile', profileSchema);

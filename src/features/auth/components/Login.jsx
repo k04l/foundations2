@@ -45,19 +45,20 @@ export const Login = () => {
       const result = await login(formData.email, formData.password);
       
       if (result.success) {
+        console.log('Login successful, checking auth state...');
         setStatus('success');
         // Add a small delay to ensure auth state is updated
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 100);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        navigate('/dashboard');
       } else {
+        console.error('Login failed:', result.error);
         setStatus('error');
         setError(result.error || 'Invalid credentials');
       }
     } catch (err) {
       console.error('Login error:', err);
       setStatus('error');
-      setError(typeof err === 'string' ? err : 'An unexpected error occurred');
+      setError(err.message || 'An unexpected error occurred');
     }
   };
 
