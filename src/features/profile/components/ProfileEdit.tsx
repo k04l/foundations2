@@ -1,5 +1,4 @@
-// src/features/profile/components/ProfileEdit.jsx
-
+// src/features/profile/components/ProfileEdit.tsx
 import React, { useState, useCallback, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
 import { Alert, AlertDescription } from '../../../components/ui/alert';
@@ -10,19 +9,26 @@ import imageCompression from 'browser-image-compression';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useNavigation } from '../../auth/hooks/useNavigation';
 import { useProfile } from '../hooks/useProfile';
+import { Profile, ProfileUpdateData } from '../types/profile.types';
+import { Form } from 'react-router-dom';
 
-const ProfileEdit = () => {
+// Define interfaces for state
+interface FormData extends ProfileUpdateData {
+    [key: string]: any;
+}
+
+const ProfileEdit: React.FC = () => {
   const { user } = useAuth();
   const { navigate } = useNavigation();
-  const { updateProfile, fetchProfile, loading: profileLoading, error: profileError } = useProfile();
+  const { updateProfile, fetchProfile } = useProfile();
 
-  // Form state management
-  const [formData, setFormData] = useState({
+  // Form state management with TypeScript types
+  const [formData, setFormData] = useState<FormData>({
     professionalTitle: '',
     company: '',
-    yearsOfExperience: '',
-    specializations: '',
-    certifications: '',
+    yearsOfExperience: 0,
+    specializations: [],
+    certifications: { name: [] },
     bio: '',
     linkedin: '',
     twitter: '',
@@ -31,28 +37,35 @@ const ProfileEdit = () => {
   });
 
   // UI state management
-  const [status, setStatus] = useState('idle');
-  const [error, setError] = useState('');
-  const [saveProgress, setSaveProgress] = useState(0);
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [error, setError] = useState<string>('');
+//   const [saveProgress, setSaveProgress] = useState<number>(0);
 
   // Image handling state
-  const [imageFile, setImageFile] = useState(null);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isCropping, setIsCropping] = useState(false);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [isCropping, setIsCropping] = useState(false);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
-  // Add useEffect to fetch existing profile data
+
+  // Fetch existing profile data
   useEffect(() => {
     const loadProfile = async () => {
       if (user?.id) {
         const result = await fetchProfile(user.id);
-        if (result.success) {
-          // Update form data with existing profile data
+        if (result.success && result.data) {
+          // Properly handle array and object fields
           setFormData(prevData => ({
             ...prevData,
-            ...result.data
+            ...result.data,
+            specializations: Array.isArray(result.data.specializations) 
+              ? result.data.specializations.join(', ')
+              : result.data.specializations,
+            certifications: Array.isArray(result.data.certifications) 
+              ? result.data.certifications.join(', ')
+              : result.data.certifications
           }));
         }
       }
@@ -61,8 +74,10 @@ const ProfileEdit = () => {
     loadProfile();
   }, [user, fetchProfile]);
 
-  // Event Handlers
-  const handleChange = (e) => {
+  // Event Handlers with TypeScript types
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -71,33 +86,31 @@ const ProfileEdit = () => {
     if (error) setError('');
   };
 
-  // Handle image drop
-  const onDrop = useCallback(async (acceptedFiles) => {
+  // Handle image drop with TypeScript
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
       try {
-        // Compress image before preview
-        const compressedFile = await imageCompression(file, {
-          maxSizeMB: 1,
-          maxWidthOrHeight: 1024,
-          useWebWorker: true
-        });
+        // const compressedFile = await imageCompression(file, {
+        //   maxSizeMB: 1,
+        //   maxWidthOrHeight: 1024,
+        //   useWebWorker: true
+        // });
         
-        // Create preview
         const reader = new FileReader();
         reader.onloadend = () => {
-          setImagePreview(reader.result);
+          setImagePreview(reader.result as string);
           setIsCropping(true);
         };
-        reader.readAsDataURL(compressedFile);
-        setImageFile(compressedFile);
+        reader.readAsDataURL(file);
+        setImageFile(file);
       } catch (err) {
-        setError('Error processing image: ' + err.message);
+        setError(`Error processing image: ${err instanceof Error ? err.message : 'Unknown error'}`);
       }
     }
   }, []);
 
-  // Configure dropzone
+//   Configure dropzone with TypeScript
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
@@ -107,75 +120,112 @@ const ProfileEdit = () => {
     multiple: false
   });
 
-  // Handle crop complete
-  const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
+  // Handle crop complete with TypeScript
+//   const onCropComplete = useCallback((croppedArea: any, pixelCrop: CropArea) => {
+//     setCroppedAreaPixels(pixelCrop);
+//   }, []);
 
-  // Update the createFinalImage function:
-  const createFinalImage = async () => {
-    try {
-      if (!imagePreview || !croppedAreaPixels) {
-        throw new Error('Image or crop area not available');
-      }
+//   // Create final image function with TypeScript
+//   const createFinalImage = async (): Promise<Blob> => {
+//     try {
+//       if (!imagePreview || !croppedAreaPixels) {
+//         throw new Error('Image or crop area not available');
+//       }
 
-      const canvas = document.createElement('canvas');
-      const image = new Image();
-      image.src = imagePreview;
+//       const canvas = document.createElement('canvas');
+//       const image = new Image();
+//       image.src = imagePreview;
 
-      await new Promise((resolve) => {
-        image.onload = resolve;
-      });
+//       await new Promise((resolve) => {
+//         image.onload = resolve;
+//       });
 
-      // Set canvas dimensions to cropped area
-      canvas.width = croppedAreaPixels.width;
-      canvas.height = croppedAreaPixels.height;
+//       canvas.width = croppedAreaPixels.width;
+//       canvas.height = croppedAreaPixels.height;
 
-      const ctx = canvas.getContext('2d');
+//       const ctx = canvas.getContext('2d');
+//       if (!ctx) {
+//         throw new Error('Could not get canvas context');
+//       }
 
-      // Draw cropped image
-      ctx.drawImage(
-        image,
-        croppedAreaPixels.x,
-        croppedAreaPixels.y,
-        croppedAreaPixels.width,
-        croppedAreaPixels.height,
-        0,
-        0,
-        croppedAreaPixels.width,
-        croppedAreaPixels.height
-      );
+//       ctx.drawImage(
+//         image,
+//         croppedAreaPixels.x,
+//         croppedAreaPixels.y,
+//         croppedAreaPixels.width,
+//         croppedAreaPixels.height,
+//         0,
+//         0,
+//         croppedAreaPixels.width,
+//         croppedAreaPixels.height
+//       );
 
-      // Convert to blob
-      return new Promise((resolve) => {
-        canvas.toBlob(resolve, 'image/jpeg', 0.9);
-      });
-    } catch (err) {
-      console.error('Error creating final image:', err);
-      throw new Error('Failed to process image');
-    }
-  };
+//       return new Promise((resolve, reject) => {
+//         canvas.toBlob(
+//           (blob) => {
+//             if (blob) {
+//               resolve(blob);
+//             } else {
+//               reject(new Error('Failed to create blob'));
+//             }
+//           },
+//           'image/jpeg',
+//           0.9
+//         );
+//       });
+//     } catch (err) {
+//       console.error('Error creating final image:', err);
+//       throw new Error('Failed to process image');
+//     }
+//   };
 
-  // Handle form submission
+  // Form submission handler with TypeScript
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus('submitting');
     setSaveProgress(0);
     
     try {
-      // Create a copy of the form data
-      const profileUpdateData = { ...formData };
-
+      const formData = new FormData();
+      
+      // Add basic fields
+      Object.keys(formData).forEach(key => {
+        if (formData[key] !== null && formData[key] !== undefined) {
+          formData.append(key, formData[key]);
+        }
+      });
+  
+      // Handle specializations
+      if (formData.specializations) {
+        const specs = Array.isArray(formData.specializations)
+          ? formData.specializations
+          : formData.specializations.split(',').map(s => s.trim());
+        formData.append('specializations', JSON.stringify(specs));
+      }
+  
+      // Handle certifications
+      if (formData.certifications) {
+        const certs = Array.isArray(formData.certifications)
+          ? formData.certifications
+          : formData.certifications.split(',').map(s => s.trim());
+        formData.append('certifications', JSON.stringify({ name: certs }));
+      }
+  
       // Process image if exists
       if (imageFile && croppedAreaPixels) {
         try {
-          const finalImageFile = await createFinalImage();
-          // Convert blob to File object
-          const imageFile = new File([finalImageFile], 'profile-image.jpg', {
+          const finalImageBlob = await createFinalImage();
+          const imageFile = new File([finalImageBlob], 'profile-image.jpg', {
             type: 'image/jpeg',
             lastModified: Date.now()
           });
-          profileUpdateData.profilePicture = imageFile;
+          formData.append('profilePicture', imageFile);
+          
+          console.log('Image file appended:', {
+            name: imageFile.name,
+            size: imageFile.size,
+            type: imageFile.type
+          });
         } catch (imageError) {
           console.error('Error processing image:', imageError);
           setError('Failed to process profile picture');
@@ -184,14 +234,11 @@ const ProfileEdit = () => {
         }
       }
   
-      // Log data being sent
-      console.log('Submitting profile update with:', profileUpdateData);
-
-      const result = await updateProfile(profileUpdateData);
-
+      console.log('Submitting profile update with formData');
+      const result = await updateProfile(formData);
+  
       if (result.success) {
         setStatus('success');
-        // Add a small delay before navigation
         setTimeout(() => {
           navigate(`/profile/${user.id}`);
         }, 100);
@@ -206,29 +253,58 @@ const ProfileEdit = () => {
     }
   };
 
-  //     // Create profile data object
-  //     const profileData = {
-  //       ...formData,
-  //       profilePicture: finalImageFile
-  //     };
-  
-  //     const result = await updateProfile(profileData);
-  
-  //     if (result.success) {
-  //       setStatus('success');
-  //       setTimeout(() => {
-  //         navigate(`/profile/${user.id}`);
-  //       }, 100);
-  //     } else {
-  //       setStatus('error');
-  //       setError(result.error || 'Failed to update profile');
-  //     }
-  //   } catch (err) {
-  //     setStatus('error');
-  //     setError(err.message || 'Failed to update profile');
-  //   }
-  // };
 
+    //   // Process form data
+    //   const profileUpdateData: Partial<ProfileUpdateData> = {
+    //     ...formData,
+    //     specializations: formData.specializations.split(',').map(s => s.trim()),
+    //     certifications: { 
+    //       name: typeof formData.certifications === 'string' 
+    //         ? formData.certifications.split(',').map(s => s.trim())
+    //         : []
+    //     }
+    //   };
+
+    //   // Process image if exists
+    //   if (imageFile && croppedAreaPixels) {
+    //     try {
+    //       const finalImageBlob = await createFinalImage();
+    //       const imageFile = new File([finalImageBlob], 'profile-image.jpg', {
+    //         type: 'image/jpeg',
+    //         lastModified: Date.now()
+    //       });
+    //       profileUpdateData.profilePicture = imageFile;
+    //     } catch (imageError) {
+    //       console.error('Error processing image:', imageError);
+    //       setError('Failed to process profile picture');
+    //       setStatus('error');
+    //       return;
+    //     }
+    //   }
+
+    //   console.log('Submitting profile update with:', profileUpdateData);
+
+    //   const result = await updateProfile(profileUpdateData);
+
+    //   if (result.success) {
+    //     setStatus('success');
+    //     setTimeout(() => {
+    //       if (user?.id) {
+    //         navigate(`/profile/${user.id}`);
+    //       }
+    //     }, 100);
+    //   } else {
+    //     setStatus('error');
+    //     setError(result.error || 'Failed to update profile');
+    // } catch (err) {
+    //   console.error('Profile update error:', err);
+    //   setStatus('error');
+    //   setError(err instanceof Error ? err.message : 'Failed to update profile');
+    // }
+
+
+
+  // Your existing JSX return statement remains the same
   return (
     <div className="max-w-4xl mx-auto">
       <Card className="bg-gray-800 border border-blue-500/20">
@@ -236,6 +312,7 @@ const ProfileEdit = () => {
           <CardTitle className="text-2xl font-bold text-blue-100">Edit Your Profile</CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Your existing JSX content remains unchanged */}
           {error && (
             <Alert variant="destructive" className="mb-6">
               <AlertCircle className="h-4 w-4" />
@@ -243,7 +320,7 @@ const ProfileEdit = () => {
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+<form onSubmit={handleSubmit} className="space-y-6">
             {/* Image Upload Section */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-blue-100 border-b border-blue-500/20 pb-2">
@@ -521,6 +598,6 @@ const ProfileEdit = () => {
       </Card>
     </div>
   );
-};
+}
 
 export default ProfileEdit;

@@ -11,35 +11,72 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     
     // Check auth status on mount
-    useEffect(() => {
-        const loadUserData = () => {
-            try {
-              const token = localStorage.getItem('token');
-              const storedUser = localStorage.getItem('user');
-              
-              console.log('Initial auth state:', {
-                hasToken: !!token,
-                hasStoredUser: !!storedUser
-              });
-      
-              if (token && storedUser) {
-                const userData = JSON.parse(storedUser);
-                setUser(userData);
-                console.log('Loaded user data:', userData);
-              } else {
-                console.log('No stored authentication data found');
-                setUser(null);
-              }
-            } catch (error) {
-              console.error('Error loading auth state:', error);
-              setUser(null);
-            } finally {
-              setLoading(false);
+    const initializeAuth = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setLoading(false);
+                return;
             }
-          };
-      
-          loadUserData();
+
+            try {
+                const response = await fetch('/api/v1/auth/verify-token', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setUser(data.user);
+                    setIsAuthenticated(true);
+                } else {
+                    // Token invalid - clean up
+                    localStorage.removeItem('token');
+                    setIsAuthenticated(false);
+                    setUser(null);
+                }
+            } catch (error) {
+                console.error('Auth initialization error:', error);
+                localStorage.removeItem('token');
+                setIsAuthenticated(false);
+                setUser(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        useEffect(() => {
+          initializeAuth();
         }, []);
+
+        // const loadUserData = () => {
+        //     try {
+        //       const token = localStorage.getItem('token');
+        //       const storedUser = localStorage.getItem('user');
+              
+        //       console.log('Initial auth state:', {
+        //         hasToken: !!token,
+        //         hasStoredUser: !!storedUser
+        //       });
+      
+        //       if (token && storedUser) {
+        //         const userData = JSON.parse(storedUser);
+        //         setUser(userData);
+        //         console.log('Loaded user data:', userData);
+        //       } else {
+        //         console.log('No stored authentication data found');
+        //         setUser(null);
+        //       }
+        //     } catch (error) {
+        //       console.error('Error loading auth state:', error);
+        //       setUser(null);
+        //     } finally {
+        //       setLoading(false);
+        //     }
+        //   };
+      
+        //   loadUserData();
+        // }, []);
 
     const checkAuth = () => {
         try {
@@ -96,21 +133,7 @@ export const AuthProvider = ({ children }) => {
         });
     
         const data = await response.json();
-        console.log('AuthContext login response:', { status: response.status, data });
-    
-        if (!response.ok) {
-            // Handle eror response
-            throw new Error(data.message || 'An error occurred during login');
-            // throw new Error(errorMessage);
-        }
-    
-        if (!data.token) {
-            return { 
-            success: false,
-            error: 'No token received from server'
-            };
-        }
-
+        if (data.success) {
         // Extract user ID from JWT token
         const decodedToken = decodeJWT(data.token);
         console.log('Decoded JWT token:', decodedToken);
@@ -120,12 +143,12 @@ export const AuthProvider = ({ children }) => {
             id: decodedToken?.id,
             email: email,
             // Add any other user fields from the response
-            // ...data.user
+             ...data.user
         };
 
         console.log('Structured user data:', userData);
 
-        // Make sure we have a valid user ID
+        // Validate the user data
         if (!userData.id) {
             console.error ('No user ID in response data:', decodedToken);
             throw new Error('Invalid user data received');
@@ -143,21 +166,24 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(true);
         console.log('Login successful, user data stored:', userData);
 
-        return { success: true, user: userData };
+            return { success: true, user: userData };
+        } 
+
+        return { success: false, error: data.message || 'Login failed' };
         } catch (error) {
-        console.error('Login error:', error);
-        // Clear any partial data
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
-        setIsAuthenticated(false);
-        setUser(null);
-        return { 
-            success: false,
-            error: error.message
-        };
-        }
-    };
+            console.error('Login error:', error);
+            // Clear any partial data
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            setIsAuthenticated(false);
+            setUser(null);
+            return { 
+                success: false,
+                error: error.message
+            };
+        }   
+    };   
 
     // Add this function to help debug auth state
     const checkAuthState = () => {
@@ -167,12 +193,13 @@ export const AuthProvider = ({ children }) => {
             token: token ? 'present' : 'missing',
             storedUser: storedUser ? JSON.parse(storedUser) : 'missing',
             contextUser: user
-        });
+        }); 
     };
 
     useEffect(() => {
         checkAuthState();
     }, [user]);
+    
     
     //     // Handle successful login
     //     // Store tokens
@@ -234,7 +261,7 @@ export const AuthProvider = ({ children }) => {
         {children}
         </AuthContext.Provider>
     );
-    };
+}
 
 // Define PropTypes directly here
 AuthProvider.propTypes = {

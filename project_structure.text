@@ -23,10 +23,12 @@
         - profile.controller.js
       - routes
         - auth.routes.js
+        - debug.routes.js
         - profile.routes.js
         - routes.js
     - app.js
     - config
+      - cloudinary.js
       - database.js
       - env.js
     - middleware
@@ -54,6 +56,7 @@
   - vite.svg
 - eslint.config.js
 - index.html
+- index.ts
 - package-lock.json
 - package.json
 - public
@@ -70,6 +73,7 @@
     - ui
       - alert.jsx
       - card.jsx
+      - loader.jsx
   - features
     - auth
       - components
@@ -107,10 +111,15 @@
       - index.js
     - profile
       - components
-        - ProfileEdit.jsx
+        - ProfileEdit.tsx
         - ProfileView.jsx
       - hooks
-        - userProfile.js
+        - useProfile.js
+      - types
+        - profile.types.ts
+      - utils
+        - completion.js
+        - validation.js
   - index.css
   - lib
     - utils.js
@@ -119,4 +128,6 @@
     - Logo.module.css
 - stylelint.config.js
 - tailwind.config.js
+- tsconfig.json
+- tsconfig.node.json
 - vite.config.js

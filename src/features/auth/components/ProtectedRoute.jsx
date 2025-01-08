@@ -3,6 +3,8 @@ import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useAuth } from '..//hooks/useAuth';
 import { useNavigation } from '../hooks/useNavigation';
+import { Loader } from '../../../components/ui/loader';
+// import { useLocation } from 'react-router-dom';
 
 export const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -10,16 +12,14 @@ export const ProtectedRoute = ({ children }) => {
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
+      // Save the attempted URL
+      localStorage.setItem('redirectAfterLogin', location.pathname);
       navigate('/login');
     }
   }, [isAuthenticated, loading, navigate]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-600">Loading...</div>
-      </div>
-    );
+    return <Loader center />;
   }
 
   return isAuthenticated ? children : null;

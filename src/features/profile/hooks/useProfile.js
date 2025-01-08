@@ -17,7 +17,7 @@ const getHeaders = useCallback(() => {
   const token = localStorage.getItem('token');
   return {
     ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-  };
+    };
   }, []);
 
   /**
@@ -112,6 +112,43 @@ const getHeaders = useCallback(() => {
   //   }
   // }, [user, getHeaders]);
 
+  // Helper function to process form data
+  const createFormData = (profileData) => {
+    const formData = new FormData();
+
+    console.log('Creating FormData with:', profileData);
+
+    // Process each field
+    Object.entries(profileData).forEach(([key, value]) => {
+      if (value === null || value === undefined) return;
+
+      // Handle file uploads (profile picture)
+      if (key === 'profilePicture' && value instanceof File) {
+        formData.append(key, value);
+        return;
+      } else if (Array.isArray(value)) {
+        // Handle arrays (like specializations)
+        formData.append(key, JSON.stringify(value));
+        return;
+      } else if (typeof value === 'object' && value !== null) {
+        // Handle nested objects (like certifications)
+        if (typeof value === 'object' && value !== null) {
+          if (key === 'certifications') {
+            // Ensure certifications is in the correct format
+            const CertArray = Array.isArray(value) ? value : [value].filter(Boolean);
+            formData.append(key, JSON.stringify(CertArray));
+          }
+          return;
+        }
+      } else {
+        // Add other values as strings
+        formData.append(key, String(value));
+      }
+    });
+    return formData;
+  };
+
+
   /**
    * Fetches a user's profile
    * @param {string} [userId] - Optional user ID. If not provided, uses current user's ID
@@ -141,13 +178,29 @@ const getHeaders = useCallback(() => {
         throw new Error(data.message || 'Failed to fetch profile');
       }
 
+      // If no profile exists, return a default structure
+      if (!data.data) {
+        return {
+          success: true,
+          data: {
+              user, targetUserId,
+              professionalTitle: '',
+              company: '',
+              yearsOfExperience: 0,
+              specializations: [],
+              certifications: { name: [] },
+              bio: '',
+              completionStatus: 0,
+              profilePicture: null,
+              isNew: true
+          }
+        };
+      }
+
       setLoading(false);
-      return { success: true, data };
+      return { success: true, data: data.data };
     } catch (err) {
-      console.error('Profile fetch error:', {
-        message: err.message,
-        userId: userId || user?.id
-      });
+      console.error('Profile fetch error:', err);
       setError(err.message || 'Failed to fetch profile');
       setLoading(false);
       return { success: false, error: err.message };
@@ -159,7 +212,24 @@ const getHeaders = useCallback(() => {
     setError(null);
 
     try {
-      const formData = new FormData();
+      // Ensure we have a user ID
+      if (!user?.id) {
+        throw new Error('No user ID available for profile update');
+      }
+
+      // Add user ID to profile data
+      const dataWithUser = {
+        ...profileData,
+        user: user.id
+      };
+
+      // Create form data object
+      const formData = createFormData(dataWithUser);
+
+      // Log FormData contents for debugging
+      for (let pair of formData.entries()) {
+        console.log('FormData:', pair[0] + ', ' + pair[1]);
+      }
 
       // Add form data construction logic...
 
@@ -170,14 +240,14 @@ const getHeaders = useCallback(() => {
         headers: getHeaders()        
       });
 
-      const responseData = await response.json();
-
       if (!response.ok) {
-        throw new Error(responseData.message || 'Failed to update profile');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update profile');
       }
 
+      const responseData = await response.json();
       setLoading(false);
-      return { success: true, data: responseData };
+      return { success: true, data: responseData.data };
     } catch (err) {
       console.error('Profile update error:', err);
       setError(err.message || 'Failed to update profile');

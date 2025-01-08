@@ -250,6 +250,36 @@ export const verifyEmail = async (req, res, next) => {
   }
 };
 
+// Verify Token
+export const verifyToken = async (req, res, next) => {
+    try {
+        // The protect middleware has already verified the token
+        // and attached the user to req.user
+        const user = await User.findById(req.user.id)
+            .select('-password -refreshToken');
+
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            user: {
+                id: user._id,
+                email: user.email,
+                name: user.name,
+                // Add any other user fields you want to return
+            }
+        });
+    } catch (error) {
+        logger.error('Token verification error:', error);
+        next(new AppError('Error verifying token', 500));
+    }
+};
+
 // @desc    Refresh token
 // @route   POST /api/v1/auth/refresh-token
 // @access  Public

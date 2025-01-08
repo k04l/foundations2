@@ -5,11 +5,13 @@ import {
     register,
     login, 
     verifyEmail, 
-    refreshToken 
+    refreshToken, 
+    verifyToken
 } from '../controllers/auth.controller.js';
 import { protect } from '../../middleware/auth.middleware.js';
 //import { protect } from '../middleware/auth.middleware.js';
 import { resendVerification, resetPasswordRequest, resetPassword, changePassword } from '../controllers/auth.controller.js';
+import { verify } from 'crypto';
 
 const router = express.Router();
 
@@ -66,7 +68,9 @@ router.get('/check-user/:email', async (req, res) => {
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
-  });
+});
+
+router.get('/verify-token', protect, verifyToken);
 
 router.post('/register', (req, res, next) => {
     console.log('Register endpoint hit:', {
