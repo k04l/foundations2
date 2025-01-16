@@ -10,40 +10,60 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     
+    const retryOperation = async (operation, retries = 3, delay = 1000) => {
+        try {
+            return await operation();
+        } catch (error) {
+            if (retries > 0) {
+                await new Promise((resolve) => setTimeout(resolve, delay));
+                return retryOperation(operation, retries - 1, delay * 2);
+            }
+            throw error;
+        }
+    };
+
     // Check auth status on mount
     const initializeAuth = async () => {
+        try {
             const token = localStorage.getItem('token');
-            if (!token) {
+            const storedUser = localStorage.getItem('user');
+
+            console.log('Init auth check:', { hasToken: !!token, hasStoredUser: !!storedUser });
+
+            if (!token || !storedUser) {
                 setLoading(false);
+                setIsAuthenticated(false);
+                setUser(null);
                 return;
             }
 
-            try {
-                const response = await fetch('/api/v1/auth/verify-token', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+                // Use the retryOperation for token verification
+                await retryOperation(async () => {
+                    const response = await fetch('/api/v1/auth/verify-token', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
 
-                if (response.ok) {
+                    if (!response.ok) {
+                        throw new Error('Token validation failed');
+                    }
+
                     const data = await response.json();
                     setUser(data.user);
                     setIsAuthenticated(true);
-                } else {
-                    // Token invalid - clean up
+                });
+                } catch (error) {
+                    console.error('Auth initialization error:', error);
+                    // Clear invalid auth state
                     localStorage.removeItem('token');
+                    localStorage.removeItem('user');
                     setIsAuthenticated(false);
                     setUser(null);
+                } finally {
+                    setLoading(false);
                 }
-            } catch (error) {
-                console.error('Auth initialization error:', error);
-                localStorage.removeItem('token');
-                setIsAuthenticated(false);
-                setUser(null);
-            } finally {
-                setLoading(false);
-            }
-        };
+            };
 
         useEffect(() => {
           initializeAuth();
@@ -261,7 +281,8 @@ export const AuthProvider = ({ children }) => {
         {children}
         </AuthContext.Provider>
     );
-}
+
+};  
 
 // Define PropTypes directly here
 AuthProvider.propTypes = {

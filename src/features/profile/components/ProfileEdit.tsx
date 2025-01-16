@@ -11,6 +11,7 @@ import { useNavigation } from '../../auth/hooks/useNavigation';
 import { useProfile } from '../hooks/useProfile';
 import { Profile, ProfileUpdateData } from '../types/profile.types';
 import { Form } from 'react-router-dom';
+import PropTypes from 'prop-types';
 
 // Define interfaces for state
 interface FormData extends ProfileUpdateData {
@@ -47,7 +48,7 @@ const ProfileEdit: React.FC = () => {
   const [isCropping, setIsCropping] = useState(false);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 
 
   // Fetch existing profile data
@@ -120,10 +121,11 @@ const ProfileEdit: React.FC = () => {
     multiple: false
   });
 
-  // Handle crop complete with TypeScript
-//   const onCropComplete = useCallback((croppedArea: any, pixelCrop: CropArea) => {
-//     setCroppedAreaPixels(pixelCrop);
-//   }, []);
+//   Handle crop complete with TypeScript
+  const onCropComplete = useCallback((croppedArea: Area, croppedAreaPicels: Area) => {
+    console.log('Cropped area:', croppedAreaPixels);
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
 
 //   // Create final image function with TypeScript
 //   const createFinalImage = async (): Promise<Blob> => {
@@ -180,10 +182,10 @@ const ProfileEdit: React.FC = () => {
 //   };
 
   // Form submission handler with TypeScript
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('submitting');
-    setSaveProgress(0);
+    // setSaveProgress(0);
     
     try {
       const formData = new FormData();
@@ -196,62 +198,70 @@ const ProfileEdit: React.FC = () => {
       });
   
       // Handle specializations
-      if (formData.specializations) {
-        const specs = Array.isArray(formData.specializations)
-          ? formData.specializations
-          : formData.specializations.split(',').map(s => s.trim());
+      if (typeof formData.specializations === 'string') {
+        const specs = formData.specializations.split(',').map(s => s.trim());
         formData.append('specializations', JSON.stringify(specs));
       }
   
       // Handle certifications
-      if (formData.certifications) {
-        const certs = Array.isArray(formData.certifications)
-          ? formData.certifications
-          : formData.certifications.split(',').map(s => s.trim());
+      if (formData.certifications === 'string') {
+        const certs = formData.certifications.split(',').map(s => s.trim());
         formData.append('certifications', JSON.stringify({ name: certs }));
       }
   
       // Process image if exists
       if (imageFile && croppedAreaPixels) {
         try {
-          const finalImageBlob = await createFinalImage();
-          const imageFile = new File([finalImageBlob], 'profile-image.jpg', {
-            type: 'image/jpeg',
-            lastModified: Date.now()
-          });
-          formData.append('profilePicture', imageFile);
-          
-          console.log('Image file appended:', {
-            name: imageFile.name,
-            size: imageFile.size,
-            type: imageFile.type
-          });
-        } catch (imageError) {
-          console.error('Error processing image:', imageError);
-          setError('Failed to process profile picture');
-          setStatus('error');
-          return;
+            const canvas = document.createElement('canvas');
+            const image = new Image();
+            image.src = imagePreview;
+
+            // Wait for image to load
+            await new Promise((resolve) => {
+                image.onload = resolve;
+            });
+
+            // Set canvas dimensions to cropped size
+            canvas.width = croppedAreaPixels.width;
+            canvas.height = croppedAreaPixels.height;
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) throw new Error('Could not get canvas context');
+
+            // Draw the cropped image
+            ctx.drawImage(
+                image,
+                croppedAreaPixels.x,
+                croppedAreaPixels.y,
+                croppedAreaPixels.width,
+                croppedAreaPixels.height,
+                0,
+                0,
+                croppedAreaPixels.width,
+                croppedAreaPixels.height
+            );
+
+            // Convert to blob
+            const blob = await new Promise<Blob>((resolve) => {
+                canvas.toBlob((blob) => {
+                    if (blob) resolve(blob);
+                    else throw new Error('Failed to create blob');
+                }, 'image/jpeg', 0.95);
+            });
+
+            // Create file from blob
+            const croppedFile = new File([blob], 'profile-image.jpg', {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+            });
+
+            formData.append('profilePicture', croppedFile);
+        } catch (error) {
+            console.error('Error processing image:', error);
+            setError('Failed to process profile picture');
+            return;
         }
-      }
-  
-      console.log('Submitting profile update with formData');
-      const result = await updateProfile(formData);
-  
-      if (result.success) {
-        setStatus('success');
-        setTimeout(() => {
-          navigate(`/profile/${user.id}`);
-        }, 100);
-      } else {
-        setStatus('error');
-        setError(result.error || 'Failed to update profile');
-      }
-    } catch (err) {
-      console.error('Profile update error:', err);
-      setStatus('error');
-      setError(err.message || 'Failed to update profile');
     }
-  };
 
 
     //   // Process form data
@@ -302,6 +312,43 @@ const ProfileEdit: React.FC = () => {
     //   setError(err instanceof Error ? err.message : 'Failed to update profile');
     // }
 
+    // Get the auth token from localStorage
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No auth token found');
+    }
+
+    const response = await fetch('https://api/v1/profile', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        },
+        body: formData
+        });
+
+    if (response.ok) {
+        throw new Error(await response.text());
+    }
+
+    const result = await response.json();
+    if (result.success) {
+        setStatus('success');
+        setTimeout(() => {
+            if (user?.id) {
+                navigate(`/profile/${user.id}`);
+            }
+        }, 100);
+    } else {
+        setStatus('error');
+        setError(result.error || 'Failed to update profile');
+    }
+    } catch (err) {
+    console.error('Profile update error:', err);
+    setStatus('error');
+    setError(err instanceof Error ? err.message : 'Failed to update profile');
+    }
+    };
+
 
 
   // Your existing JSX return statement remains the same
@@ -320,7 +367,7 @@ const ProfileEdit: React.FC = () => {
             </Alert>
           )}
 
-<form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
             {/* Image Upload Section */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-blue-100 border-b border-blue-500/20 pb-2">
@@ -600,4 +647,9 @@ const ProfileEdit: React.FC = () => {
   );
 }
 
+ProfileEdit.propTypes = {
+    children: PropTypes.node.isRequired,
+  };
+
 export default ProfileEdit;
+
