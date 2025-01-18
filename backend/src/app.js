@@ -7,14 +7,27 @@ import compression from 'compression';
 import mongoSanitize from 'express-mongo-sanitize';
 import cookieParser from 'cookie-parser';
 import fileUpload from 'express-fileupload';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { config } from './config/env.js';
 import { errorHandler, notFound } from './middleware/error.middleware.js';
 import { logRequest } from './middleware/logger.middleware.js';
 import { connectDB } from './config/database.js';
 import routes from './api/routes/routes.js';
 import mongoose from 'mongoose';
+import fs from 'fs/promises';
 
 const app = express();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const uploadDir = path.join(__dirname, '../uploads/profiles');
+try {
+  await fs.mkdir(uploadDir, { recursive: true });
+} catch (err) {
+  console.error('Error creating upload directory:', err);
+}
 
 // Connect to database
 connectDB();
@@ -57,13 +70,20 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(compression());
 app.use(mongoSanitize());
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // File upload middleware
 app.use(fileUpload({
   useTempFiles: true,
   tempFileDir: '/tmp/',
-  debug: true,
-  createParentPath: true
+  createParentPath: true,
+  debug: process.env.NODE_ENV === 'development',
+  uploadTimeout: 60000,
+  limits: {
+    fileSize: 1024 * 1024 * 10 // 10 MB
+  },
+  abortOnLimit: true,
+  uploadDir: path.join(__dirname, '../uploads/profiles') // Set upload directory
 }));
 
 // Request logging

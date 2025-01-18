@@ -43,6 +43,8 @@
       - email.js
       - logger.js
   - test-server.js
+  - uploads
+    - profiles
 - backup
   - your-database
     - users.bson
@@ -79,6 +81,7 @@
       - components
         - alert.jsx
         - EmailVerification.jsx
+        - ErrorBoundary.jsx
         - Login.jsx
         - ProtectedRoute.jsx
         - Register.jsx
@@ -130,4 +133,6 @@
 - tailwind.config.js
 - tsconfig.json
 - tsconfig.node.json
+- uploads
+  - profiles
 - vite.config.js

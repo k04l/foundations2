@@ -1,10 +1,18 @@
 // src/api/controllers/profile.controller.js
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs/promises';
 import { AppError } from '../../middleware/error.middleware.js';
 import Profile from '../../models/profile.model.js';
+import User from '../../models/user.model.js';
 import logger from '../../utils/logger.js';
 // import cloudinary from '../../config/cloudinary.js';
 // import { promisify } from 'util';
 import mongoose from 'mongoose';
+
+// Get directory name of current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Get profile by user ID
@@ -13,31 +21,33 @@ import mongoose from 'mongoose';
  */
 export const getProfile = async (req, res, next) => {
   try {
-    logger.debug('Fetching profile for user:', req.params.userId);
-
-    console.log('GetProfile called:', {
-        userId: req.params.userId,
-        authenicatedUser: req.user?.id,
-        headers: req.headers
-    });
+    const userId = req.params.userId;
+    console.log('Fetching profile for user:', userId);
     
-    const profile = await Profile.findOne({ user: req.params.userId });
+    let profile = await Profile.findOne({ user: userId });
     console.log('Profile found:', profile);
     
     // If no profile exists, return a default structure
     // This helps the frontend handle new profiles consistently
     if (!profile) {
-        // If no profile exists, return a default structure
+        // Instead of immediately creating a profile with missing required fields,
+        // return a template that matches our frontend expectations
         return res.status(200).json({
             success: true,
             data: {
-                user: req.params.userId,
+                user: userId,
+                firstName: '',
+                lastName: '',
                 professionalTitle: '',
                 company: '',
                 yearsOfExperience: 0,
                 specializations: [],
-                certifications: [],
+                certifications: { name: [] },
                 bio: '',
+                contactEmail: '',
+                phoneNumber: '',
+                linkedin: '',
+                twitter: '',
                 completionStatus: 0,
                 isNew: true
             }
@@ -66,115 +76,102 @@ export const getProfile = async (req, res, next) => {
  * @access Private
  */
 export const updateProfile = async (req, res, next) => {
-  try {
-    logger.debug('Updating profile for user:', req.user.id);
-    logger.debug('Profile update data:', req.body);
-    console.log('UpdateProfile called:', {
-        userId: req.user?.id,
-        body: req.body,
-        files: req.files,
-        collections: await mongoose.connection.db.collections() // this will list all collections
-    });
+    try {
+        logger.debug('Profile update data:', req.body);
+        const profileData = { ...req.body };
 
-    // Verify user authentication
-    if (!req.user?.id) {
-        return next(new AppError('Authentication required', 401));
-    }
+        // Ensure user ID is set
+        profileData.user = req.user.id;
 
-    // Parse certifications properly
-    let certifications = [];
-    if (req.body.certifications) {
-        certifications = Array.isArray(req.body.certifications) 
-            ? req.body.certifications
-            : typeof req.body.certifications === 'string'
-                ? req.body.certifications.split(',').map(cert => cert.trim())
-                : [];
-    }
+        // Process specializations
+        try {
+            if (typeof profileData.specializations === 'string') {
+                profileData.specializations = JSON.parse(profileData.specializations);
+                // Ensure it's an array
+                if (!Array.isArray(profileData.specializations)) {
+                    profileData.specializations = [];
+                }
+            }
+        } catch (e) {
+            logger.error('Error parsing specializations:', e);
+            profileData.specializations = [];
+        }
+      
+        // Process certifications
+        try {
+            if (typeof profileData.certifications === 'string') {
+                profileData.certifications = JSON.parse(profileData.certifications);
+                // Ensure proper structure
+                if (!profileData.certifications.name || !Array.isArray(profileData.certifications.name)) {
+                    profileData.certifications = { name: [] };
+                }
+            }
+        } catch (e) {
+            logger.error('Error parsing certifications:', e);
+            profileData.certifications = { name: [] };
+        }
+  
+      // Handle profile picture
+      if (req.files?.profilePicture) {
+        console.log('Processing profile picture:', req.files.profilePicture);
 
-    // Handle profile picture upload if included
-    let profilePictureData = {};
-    if (req.files?.profilePicture) {
-      const file = req.files.profilePicture;
-      console.log('Processing profile picture:', file);
+        // Handle  single file or array of files
+        const file = Array.isArray(req.files.profilePicture)
+            ? req.files.profilePicture[0]
+            : req.files.profilePicture;
+        
+        // Create uploads directory if it doesn't exist
+        const uploadPath = path.join(__dirname, '../../uploads/profiles');
+        await fs.mkdir(uploadPath, { recursive: true });
 
-      profilePictureData = {
-        url: file.tempFilePath, // TODO: implement proper file storage
-        name: file.name
+        const fileName = `${Date.now()}-${file.name}`;
+        const filePath = path.join(uploadPath, fileName);
+  
+        // Ensure upload directory exists
+        // await fs.promises.mkdir(uploadPath, { recursive: true });
+        
+        // Move file
+        await file.mv(filePath);
+  
+        profileData.profilePicture = {
+          url: `/uploads/profiles/${fileName}`,
+          name: file.name
         };
-    }
+      }
 
-    // Prepare profile data
-    const profileData = {
-        ...req.body,
-        certifications,
-        user: req.user.id,
-        ...(Object.keys(profilePictureData).length > 0 && { profilePicture: profilePictureData })
-    };
-
-    // Parse specializations if they come as a string
-    if (typeof profileData.specializations === 'string') {
-        profileData.specializations = profileData.specializations.split(',').map(s => s.trim());
-    }
-
-    console.log('Saving profile data:', profileData);
-
-    // Update or create profile
-    const profile = await Profile.findOneAndUpdate(
+      // Remove unwanted fields that shouldn't be updated directly
+      delete profileData._id;
+      delete profileData.__v;
+    //   delete profileData.user;
+  
+      // Update the profile
+      const profile = await Profile.findOneAndUpdate(
         { user: req.user.id },
         profileData,
-        {
-            new: true,
-            upsert: true,
-            runValidators: true,
-            setDefaultsOnInsert: true
-        }
-    );
-
-    console.log('Profile saved:', profile);
-
-    // Parse arrays from form data
-    // if (typeof profileData.specializations === 'string') {
-    //     profileData.specializations = profileData.specializations.split(',').map(s => s.trim());
-    // }
-    // if (typeof profileData.certifications === 'string') {
-    //     profileData.certifications = profileData.certifications.split(',').map(s => s.trim());
-    // }
-
-    //   // Upload to Cloudinary
-    //   const result = await cloudinary.uploader.upload(file.tempFilePath, {
-    //     folder: 'profile-pictures',
-    //     width: 400,
-    //     height: 400,
-    //     crop: 'fill',
-    //     gravity: 'face'
-    //   });
-
-    //   profilePictureData = {
-    //     url: result.secure_url,
-    //     publicId: result.public_id
-    //   };
-
-    //    // Update or create profile
-    //     const profile = await Profile.findOneAndUpdate(
-    //         { user: req.user.id },
-    //         profileData,
-    //         {
-    //         new: true,
-    //         upsert: true,
-    //         runValidators: true,
-    //         setDefaultsOnInsert: true
-    //         }
-    //     );
-
-        res.status(200).json({
-            success: true,
-            data: profile
+        { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+      );
+  
+      // Also update the user's name
+      if (profileData.firstName && profileData.lastName) {
+        await User.findByIdAndUpdate(req.user.id, {
+          name: `${profileData.firstName} ${profileData.lastName}`
         });
+      }
+
+      logger.info('Profile updated successfully:', {
+        user: req.user.id,
+        profileId: profile._id
+      })
+  
+      res.status(200).json({
+        success: true,
+        data: profile
+      });
     } catch (err) {
-        console.error('Profile update error:', err);
-        next(new AppError(err.message || 'Error updating profile', 500));
+        logger.error('Error updating profile:', err);
+      next(new AppError(err.message || 'Error updating profile', 500));
     }
-};
+  };
 
     /**
      * Delete profile picture

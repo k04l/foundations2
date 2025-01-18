@@ -3,6 +3,8 @@
 export interface Profile {
     _id?: string;
     user: string;
+    firstname: string;
+    lastName: string;
     professionalTitle: string;
     company: string;
     yearsOfExperience: number;
@@ -29,17 +31,30 @@ export interface Profile {
     updatedAt: Date;
   }
   
-  export interface ProfileUpdateData {
-    professionalTitle?: string;
-    company?: string;
-    yearsOfExperience?: number;
-    specializations?: string[];
-    certifications?: string[];
-    bio?: string;
+  export interface ProfileFormData {
+    user?: string;
+    firstName: string;
+    lastName: string;
+    professionalTitle: string;
+    company: string;
+    yearsOfExperience: number;
+    specializations: string[] | string; // Can be either array or string during editing
+    certifications: {
+        name: string[] | string; // Can be either array or string during editing;
+    };
+    bio: string;
     contactEmail?: string;
     phoneNumber?: string;
     linkedin?: string;
     twitter?: string;
-    profilePicture?: File;
-    isPublic?: boolean;
+    isNew?: boolean;
+    // profilePicture: File;
+    // isPublic?: boolean;
+  }
+
+  export interface Area {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
   }

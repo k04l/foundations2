@@ -7,7 +7,23 @@ const profileSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
-    unique: true
+  },
+
+  firstName: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  lastName: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  fullName: {
+    type: String,
+    get: function() {
+      return `${this.firstName} ${this.lastName}`;
+    }
   },
 
   // Professional Information
@@ -88,7 +104,7 @@ const profileSchema = new mongoose.Schema({
   // Profile Picture
   profilePicture: {
     url: String,
-    publicId: String,  // For cloud storage reference (e.g., Cloudinary)
+    // publicId: String,  // For cloud storage reference (e.g., Cloudinary)
     name: String
   },
 

@@ -125,28 +125,31 @@ const getHeaders = useCallback(() => {
       // Handle file uploads (profile picture)
       if (key === 'profilePicture' && value instanceof File) {
         formData.append(key, value);
-        return;
-      } else if (Array.isArray(value)) {
+      } else if (key === 'specializations') {
         // Handle arrays (like specializations)
-        formData.append(key, JSON.stringify(value));
-        return;
-      } else if (typeof value === 'object' && value !== null) {
-        // Handle nested objects (like certifications)
-        if (typeof value === 'object' && value !== null) {
-          if (key === 'certifications') {
-            // Ensure certifications is in the correct format
-            const CertArray = Array.isArray(value) ? value : [value].filter(Boolean);
-            formData.append(key, JSON.stringify(CertArray));
-          }
-          return;
-        }
-      } else {
-        // Add other values as strings
-        formData.append(key, String(value));
-      }
-    });
-    return formData;
-  };
+        const specs = Array.isArray(value)
+          ? value
+          : typeof value === 'string'
+            ? value.split(',').map((s) => s.trim())
+            : [];
+        formData.append('specializations', JSON.stringify(specs));
+      } else if (key === 'certifications') {
+            // Handle certifications object
+      const certs = {
+        name: Array.isArray(value?.name) 
+          ? value.name 
+          : typeof value === 'string'
+            ? [value]
+            : []
+      };
+      formData.append('certifications', JSON.stringify(certs));
+    } else {
+      formData.append(key, String(value));
+    }
+  });
+
+  return formData;
+};
 
 
   /**
