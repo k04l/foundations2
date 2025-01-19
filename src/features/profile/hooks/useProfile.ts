@@ -1,7 +1,8 @@
-// src/features/profile/hooks/useProfile.js
+// src/features/profile/hooks/useProfile.ts
 
 import { useState, useCallback } from 'react';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { ProfileFormData } from '../types/profile.types';
 
 /**
  * Custom hook for managing profile operations
@@ -10,7 +11,7 @@ import { useAuth } from '../../auth/hooks/useAuth';
 export const useProfile = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
 // Helper function to get auth headers
 const getHeaders = useCallback(() => {
@@ -113,7 +114,7 @@ const getHeaders = useCallback(() => {
   // }, [user, getHeaders]);
 
   // Helper function to process form data
-  const createFormData = (profileData) => {
+  const createFormData = useCallback((profileData: ProfileFormData): FormData => {
     const formData = new FormData();
 
     console.log('Creating FormData with:', profileData);
@@ -122,34 +123,50 @@ const getHeaders = useCallback(() => {
     Object.entries(profileData).forEach(([key, value]) => {
       if (value === null || value === undefined) return;
 
-      // Handle file uploads (profile picture)
-      if (key === 'profilePicture' && value instanceof File) {
-        formData.append(key, value);
-      } else if (key === 'specializations') {
-        // Handle arrays (like specializations)
-        const specs = Array.isArray(value)
-          ? value
-          : typeof value === 'string'
-            ? value.split(',').map((s) => s.trim())
-            : [];
-        formData.append('specializations', JSON.stringify(specs));
-      } else if (key === 'certifications') {
-            // Handle certifications object
-      const certs = {
-        name: Array.isArray(value?.name) 
-          ? value.name 
-          : typeof value === 'string'
-            ? [value]
-            : []
-      };
-      formData.append('certifications', JSON.stringify(certs));
-    } else {
-      formData.append(key, String(value));
-    }
+      // Handle arrays and objects
+      switch (key) {
+        case 'profilePicture':
+          // Handle file upload
+          if (value instanceof File) {
+            formData.append(key, value);
+          }
+          break;
+
+        case 'specializations':
+          // Handle array data with proper typing
+          const specs = Array.isArray(value)
+            ? value
+            : typeof value === 'string'
+              ? value.split(',').map(s => s.trim()).filter(Boolean)
+              : [];
+          formData.append(key, JSON.stringify(specs));
+          break;
+
+        case 'certifications':
+          // Handle nested object with proper structure
+          const certs = {
+            name: Array.isArray(value?.name)
+              ? value.name
+              : typeof value === 'string'
+                ? [value]
+                : []
+          };
+          formData.append(key, JSON.stringify(certs));
+          break;
+
+        case 'yearsOfExperience':
+          // Ensure number type
+          formData.append(key, String(Number(value)));
+          break;
+
+        default:
+          // Handle all other fields as strings
+          formData.append(key, String(value));
+      }
   });
 
   return formData;
-};
+}, []);
 
 
   /**
@@ -210,54 +227,37 @@ const getHeaders = useCallback(() => {
     }
   }, [user, getHeaders]);
 
-  const updateProfile = useCallback(async (profileData) => {
-    setLoading(true);
-    setError(null);
+const updateProfile = async (profileData: ProcessedProfileData) => {
 
-    try {
-      // Ensure we have a user ID
-      if (!user?.id) {
-        throw new Error('No user ID available for profile update');
+  try {
+    const formData = new FormData();
+    
+    // Add all fields to FormData
+    Object.entries(profileData).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        if (typeof value === 'object') {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, String(value));
+        }
       }
+    });
 
-      // Add user ID to profile data
-      const dataWithUser = {
-        ...profileData,
-        user: user.id
-      };
+    const response = await fetch('/api/v1/profiles', {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: formData
+    });
 
-      // Create form data object
-      const formData = createFormData(dataWithUser);
-
-      // Log FormData contents for debugging
-      for (let pair of formData.entries()) {
-        console.log('FormData:', pair[0] + ', ' + pair[1]);
-      }
-
-      // Add form data construction logic...
-
-      const response = await fetch('/api/v1/profiles', {
-        method: 'PUT',
-        body: formData,
-        credentials: 'include',
-        headers: getHeaders()        
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update profile');
-      }
-
-      const responseData = await response.json();
-      setLoading(false);
-      return { success: true, data: responseData.data };
-    } catch (err) {
-      console.error('Profile update error:', err);
-      setError(err.message || 'Failed to update profile');
-      setLoading(false);
-      return { success: false, error: err.message };
-    }
-  }, [user, getHeaders]);
+    const data = await response.json();
+    return { success: true, data };
+  } catch (error) {
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to update profile' 
+    };
+  }
+};
 
   return {
     updateProfile,

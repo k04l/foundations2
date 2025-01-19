@@ -20,6 +20,7 @@ import ProfileEdit from './features/profile/components/ProfileEdit';
 import { useNavigation } from './features/auth/hooks/useNavigation';
 import { Loader } from './components/ui/loader';
 import ErrorBoundary from './features/auth/components/ErrorBoundary';
+import PropTypes from 'prop-types';
 
 // Separate Header component with dropdown functionality
 const Header = () => {
@@ -165,22 +166,98 @@ const Header = () => {
 
 // Main content area for the app
 
+const Routes = ({ currentPath, isAuthenticated, user, navigate }) => {
+  // Handle profile routes first
+  if (currentPath.startsWith('/profile/')) {
+    // Edit route takes precedence
+    if (currentPath === '/profile/edit') {
+      return (
+        <ProtectedRoute>
+          <ProfileEdit />
+        </ProtectedRoute>
+      );
+    }
+
+    // Handle dynamic profile routes
+    const userId = currentPath.split('/profile/')[1];
+    if (userId) {
+      return <ProfileView userId={userId} />;
+    }
+  }
+
+  // Handle base profile route
+  if (currentPath === '/profile') {
+    if (!user?.id) {
+      return <Loader center />;
+    }
+    navigate(`/profile/${user.id}`);
+    return null;
+  }
+
+  // Handle standard routes
+  switch (currentPath) {
+    case '/':
+      return <HomePage />;
+    case '/register':
+      return !isAuthenticated ? <Register /> : null;
+    case '/login':
+      return !isAuthenticated ? <Login /> : null;
+    case '/dashboard':
+      return (
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      );
+    case '/reset-password-request':
+      return <RequestPasswordReset />;
+    case '/reset-password':
+      return <ResetPassword />;
+    case '/verify-email':
+      return (
+        <div className="max-w-md mx-auto">
+          <h1 className="text-2xl font-bold text-center mb-8 text-blue-100">
+            Email Verification
+          </h1>
+          <EmailVerification />
+          <ResendVerification />
+        </div>
+      );
+    default:
+      return (
+        <div className="text-center py-12">
+          <p className="text-blue-300 mb-4">Page not found</p>
+          <button
+            onClick={() => navigate('/')}
+            className="text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            Return to Home
+          </button>
+        </div>
+      );
+  }
+};
+
+// Create a Footer
+const Footer = () => (
+  <footer className="bg-gray-900/80 border-t border-blue-500/20 mt-auto">
+    <div className="container mx-auto px-4 py-4 text-center text-blue-300">
+      © 2025 Bernoullia. All rights reserved.
+    </div>
+  </footer>
+);
+
+// Main app content area
 const AppContent = () => {
   const { currentPath, navigate } = useNavigation();
   const { isAuthenticated, user, loading: authLoading } = useAuth();
 
-  // Handle authenticated route redirects
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!authLoading && isAuthenticated) {
       if (currentPath === '/login' || currentPath === '/register') {
         navigate('/dashboard');
       }
     }
-  }, [isAuthenticated, currentPath, navigate]);
-
-  // Render different content based on current path
-  const renderContent = () => {
-    console.log('Current path:', currentPath); // Helpful for debugging
+  }, [authLoading, isAuthenticated, currentPath, navigate]);
  
   // Show loading state while auth is being checked
   if (authLoading) {
@@ -191,33 +268,29 @@ const AppContent = () => {
     );
   }
 
-  // Handle the base /profile route
-  if (currentPath === '/profile') {
-    if (!user?.id) {
-      return <Loader center />;
-    }
-    navigate(`/profile/${user.id}`);
-    return null;
+  // Special handling for homepage
+  if (currentPath === '/') {
+    return <HomePage />;
   }
 
 
-    // First handle profile-related routes with special pattern matching
-    if (currentPath.startsWith('/profile/')) {
-      // Handle edit route explicitly first
-      if (currentPath === '/profile/edit') {
-        return (
-          <ProtectedRoute>
-            <ProfileEdit />
-          </ProtectedRoute>
-        );
-      }
-      
-      // Then handle dynamic profile routes
-      const userId = currentPath.split('/profile/')[1];
-      if (userId) {
-        return <ProfileView userId={userId} />;
-      }
-    }
+  // First handle profile-related routes with special pattern matching
+  // if (currentPath.startsWith('/profile/')) {
+  //   // Handle edit route explicitly first
+  //   if (currentPath === '/profile/edit') {
+  //     return (
+  //       <ProtectedRoute>
+  //         <ProfileEdit />
+  //       </ProtectedRoute>
+  //     );
+  //   }
+    
+  //   // Then handle dynamic profile routes
+  //   const userId = currentPath.split('/profile/')[1];
+  //   if (userId) {
+  //     return <ProfileView userId={userId} />;
+  //   }
+  // }
 
       // Default to current user's profile if no ID is provided
       // if (user?.id) {
@@ -230,52 +303,52 @@ const AppContent = () => {
     //   return null;
     // }
 
-    // Handle standard routes
-    switch (currentPath) {
-      case '/':
-        return <HomePage />;
-      case '/register':
-        return !isAuthenticated ? <Register /> : null;
-      case '/login':
-        return !isAuthenticated ? <Login /> : null;
-      case '/dashboard':
-        return (
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        );
-      case '/reset-password-request':
-        return <RequestPasswordReset />;
-      case '/reset-password':
-        return <ResetPassword />;
-      case '/verify-email':
-        return (
-          <div className="max-w-md mx-auto">
-            <h1 className="text-2xl font-bold text-center mb-8 text-blue-100">
-              Email Verification
-            </h1>
-            <EmailVerification />
-            <ResendVerification />
-          </div>
-        );
-      default:
-        return (
-          <div className="text-center py-12">
-            <p className="text-blue-300 mb-4">Page not found</p>
-            <button
-              onClick={() => navigate('/')}
-              className="text-blue-400 hover:text-blue-300 transition-colors"
-            >
-              Return to Home
-            </button>
-          </div>
-        );
-    }
-  };
+  //   // Handle standard routes
+  //   switch (currentPath) {
+  //     case '/':
+  //       return <HomePage />;
+  //     case '/register':
+  //       return !isAuthenticated ? <Register /> : null;
+  //     case '/login':
+  //       return !isAuthenticated ? <Login /> : null;
+  //     case '/dashboard':
+  //       return (
+  //         <ProtectedRoute>
+  //           <Dashboard />
+  //         </ProtectedRoute>
+  //       );
+  //     case '/reset-password-request':
+  //       return <RequestPasswordReset />;
+  //     case '/reset-password':
+  //       return <ResetPassword />;
+  //     case '/verify-email':
+  //       return (
+  //         <div className="max-w-md mx-auto">
+  //           <h1 className="text-2xl font-bold text-center mb-8 text-blue-100">
+  //             Email Verification
+  //           </h1>
+  //           <EmailVerification />
+  //           <ResendVerification />
+  //         </div>
+  //       );
+  //     default:
+  //       return (
+  //         <div className="text-center py-12">
+  //           <p className="text-blue-300 mb-4">Page not found</p>
+  //           <button
+  //             onClick={() => navigate('/')}
+  //             className="text-blue-400 hover:text-blue-300 transition-colors"
+  //           >
+  //             Return to Home
+  //           </button>
+  //         </div>
+  //       );
+  //   }
+  // };
 
   // Special handling for homepage to avoid wrapping it in the default layout
   if (currentPath === '/') {
-    return renderContent();
+    return <HomePage />;
   }
 
   // Default layout for all other pages
@@ -283,17 +356,14 @@ const AppContent = () => {
     <div className="min-h-screen bg-gray-900 text-blue-100">
       <Header />
       <main className="container mx-auto px-4 py-8">
-        {renderContent()}
+        <Routes currentPath={currentPath} isAuthenticated={isAuthenticated} user={user} navigate={navigate}/>
       </main>
-      <footer className="bg-gray-900/80 border-t border-blue-500/20 mt-auto">
-        <div className="container mx-auto px-4 py-4 text-center text-blue-300">
-          © 2025 Bernoullia. All rights reserved.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
 
+// Main app component
 const App = () => {
   return (
     <ErrorBoundary>
@@ -307,3 +377,14 @@ const App = () => {
 };
 
 export default App;
+
+Routes.propTypes = {
+  currentPath: PropTypes.string.isRequired,
+  isAuthenticated: PropTypes.bool.isRequired,
+  user: PropTypes.object
+};
+
+// Ensure the navigate function is available in the Routes component
+Routes.contextTypes = {
+  navigate: PropTypes.func
+};

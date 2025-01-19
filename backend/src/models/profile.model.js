@@ -45,17 +45,15 @@ const profileSchema = new mongoose.Schema({
   },
   
   // Skills and Expertise
-  specializations: [{
+  specializations: {
     type: [String],
-    trim: true,
     default: []
-  }],
+  },
   certifications: {
-    name: {
-      type: [String],
-      trim: true,
-      default: []
-    }
+    type: [{
+      name: String
+    }],
+    default: []
   },
 
   // Detailed Information

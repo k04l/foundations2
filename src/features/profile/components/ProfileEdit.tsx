@@ -24,19 +24,24 @@ interface ProfilePictureData {
 }
 
 const ProfileEdit: React.FC = () => {
-    const { user } = useAuth();
+    const { user }: { user: { id: string } | null } = useAuth();
     const { navigate } = useNavigation();
     const { updateProfile, fetchProfile } = useProfile();
 
     // Form state management
     const [formData, setFormData] = useState<ProfileFormData>({
+        user: user?.id || '',
         firstName: '',
         lastName: '',
         professionalTitle: '',
         company: '',
         yearsOfExperience: 0,
-        specializations: [],
-        certifications: { name: [] },
+        specializations: [] as string[],
+        specializationsInput: '',
+        certifications: { 
+            name: [] as string[] 
+        },
+        certificationsInput: '',
         bio: '',
         contactEmail: '',
         phoneNumber: '',
@@ -115,6 +120,35 @@ const ProfileEdit: React.FC = () => {
         }
     }, []);
 
+    const processFormData = (data: ProfileFormData): ProcessedProfileData => {
+        // Process specializations
+        const specializations = [
+            ...data.specializations,
+            ...(data.specializationsInput
+                .split(',')
+                .map(s => s.trim())
+                .filter(Boolean))
+        ];
+    
+        // Process certifications
+        const certifications = {
+            name: [
+                ...data.certifications.name,
+                ...(data.certificationsInput
+                    .split(',')
+                    .map(s => s.trim())
+                    .filter(Boolean))
+            ]
+        };
+    
+        // Return cleaned data without the input fields
+        return {
+            ...data,
+            specializations,
+            certifications
+        };        
+    };
+
     // Configure dropzone
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
@@ -180,36 +214,26 @@ const ProfileEdit: React.FC = () => {
 
     // Enhanced form submission with proper error handling
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault
+        e.preventDefault();
         setStatus('submitting');
         setError('');
 
         try {
-            // First process the form data into the correct format
-            const processedData = {
-                ...formData,
-                specializations: typeof formData.specializations === 'string'
-                    ? formData.specializations.split(',').map(s => s.trim()).filter(Boolean)
-                    : formData.specializations,
-                certifications: {
-                    name: typeof formData.certifications === 'string' 
-                        ? formData.certifications.split(',').map(s => s.trim()).filter(Boolean)
-                        : formData.certifications.name 
-                }
-            };
+            // Process form data
+            const processedData = processFormData(formData);
 
-            // Now create the FormData object with our processed data
+            // Create FormData instance for file upload
             const formDataToSubmit = new FormData();
 
             // Add processsed fields to FormData
             Object.entries(processedData).forEach(([key, value]) => {
                 if (value !== null && value !== undefined) {
-                    if (key === 'specializations' || key === 'certifications') {
-                        // Convert arrays and objects to JSON strings
-                        formDataToSubmit.append(key, JSON.stringify(value));
-                    } else {
-                        formDataToSubmit.append(key, String(value));
-                    }
+                    // Handle nested objects and arrays
+                if (typeof value === 'object') {
+                    formDataToSubmit.append(key, JSON.stringify(value));
+                } else {
+                    formDataToSubmit.append(key, String(value));
+                }
                 }
             });
 
@@ -248,7 +272,8 @@ const ProfileEdit: React.FC = () => {
                 throw new Error(errorData.message || 'Failed to update profile');
             }
 
-            const result = await response.json();
+            // Submit the form data
+            const result = await updateProfile(processedData);
 
             if (result.success) {
                 setStatus('success');
@@ -275,27 +300,35 @@ const ProfileEdit: React.FC = () => {
         const { name, value } = e.target;
 
         setFormData(prev => {
-            // Handle number fields properly
-            if (name === 'yearsOfExperience') {
-                return { ...prev, [name]: value ==='' ? 0 : parseInt(value, 10) };
+            switch (name) {
+                case 'yearsOfExperience':
+                  return { ...prev, [name]: value === '' ? 0 : parseInt(value, 10) };
+                
+                case 'specializations':
+                    return { 
+                        ...prev, 
+                        specializationsInput: value,
+                        // Only update the array when a comma is added
+                        specializations: value.endsWith(',') 
+                          ? [...new Set([...prev.specializations, value.slice(0, -1).trim()])]
+                          : prev.specializations
+                      };
+          
+                case 'certifications':
+                    return { 
+                      ...prev,
+                      certificationsInput: value,
+                      // Only update the array when a comma is added
+                      certifications: {
+                        name: value.endsWith(',')
+                          ? [...new Set([...prev.certifications.name, value.slice(0, -1).trim()])]
+                          : prev.certifications.name
+                      }
+                    };
+          
+                default:
+                  return { ...prev, [name]: value };
             }
-
-            // Special handling for array fields
-            if (name === 'specializations') {                
-                return { ...prev, [name]: value.split(',').map(s => s.trim()) };
-            }
-
-            if (name === 'certifications') {
-                return { 
-                    ...prev, 
-                    certifications: {
-                        name: value.split(',').map(s => s.trim())
-                    } 
-                };
-            }
-        
-            // Default handling for other fields
-            return { ...prev, [name]: value };
         });
 
         if (error) setError('');
@@ -483,16 +516,21 @@ const ProfileEdit: React.FC = () => {
                                 </label>
                                 <textarea
                                     name="specializations"
-                                    value={typeof formData.specializations === 'string' 
-                                        ? formData.specializations 
-                                        : Array.isArray(formData.specializations)
-                                            ? formData.specializations.join(', ')
-                                            : ''}
+                                    value={formData.specializationsInput}
                                     onChange={handleChange}
                                     className="w-full px-3 py-2 bg-gray-700 border border-blue-500/20 rounded-md text-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     rows={3}
-                                    placeholder="e.g., HVAC Design, Energy Modeling, Sustainable Design"
+                                    placeholder="Type specializations separated by commas..."
                                 />
+
+                                {/* Display current specializations */}
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                    {formData.specializations.map((spec, index) => (
+                                        <span key={index} className="px-2 py-1 bg-blue-500/20 rounded-full text-sm">
+                                        {spec}
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
 
                             <div>
@@ -501,11 +539,7 @@ const ProfileEdit: React.FC = () => {
                                 </label>
                                 <textarea
                                     name="certifications"
-                                    value={typeof formData.certifications.name === 'string'
-                                        ? formData.certifications.name
-                                        : Array.isArray(formData.certifications.name)
-                                            ? formData.certifications.name.join(', ')
-                                            : ''}
+                                    value={formData.certificationsInput}
                                     onChange={handleChange}
                                     className="w-full px-3 py-2 bg-gray-700 border border-blue-500/20 rounded-md text-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     rows={2}
