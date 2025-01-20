@@ -39,6 +39,13 @@
       - profile.model.js
       - user.model.js
     - server.js
+    - uploads
+      - profiles
+        - 1737241464140-profile-image.jpg
+        - 1737258352154-profile-image.jpg
+        - 1737264425897-profile-image.jpg
+        - 1737265600052-profile-image.jpg
+        - 1737272469937-profile-image.jpg
     - utils
       - email.js
       - logger.js
@@ -72,6 +79,8 @@
   - bernoullia-logo.svg
   - components
     - Logo.jsx
+    - ProfileImage.tsx
+    - Routes.tsx
     - ui
       - alert.jsx
       - card.jsx
@@ -114,10 +123,11 @@
       - index.js
     - profile
       - components
+        - index.ts
         - ProfileEdit.tsx
-        - ProfileView.jsx
+        - ProfileView.tsx
       - hooks
-        - useProfile.js
+        - useProfile.ts
       - types
         - profile.types.ts
       - utils

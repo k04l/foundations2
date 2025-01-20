@@ -23,8 +23,40 @@ interface ProfilePictureData {
     name?: string;
 }
 
+const processSpecializations = (specializations: any): string[] => {
+    if (!specializations) return [];
+
+    // If it's already an array, return it as is
+    if (Array.isArray(specializations) && specializations.every(item => typeof item === 'string')) {
+        return specializations;
+    }
+
+    // If it's an array of JSON strings, parse them
+    if (Array.isArray(specializations)) {
+        try {
+            //Flatten nested arrays and filter out empty values
+            return specializations
+            .map(item => {
+                try {
+                    const parsed = JSON.parse(item);
+                    return Array.isArray(parsed) ? parsed : [item];
+                } catch {
+                    return [item];
+                }
+            })
+            .flat()
+            .filter(Boolean)
+            .map(item => item.trim());
+        } catch {
+            return [];
+        }
+    }
+
+    return [];
+};
+
 const ProfileEdit: React.FC = () => {
-    const { user }: { user: { id: string } | null } = useAuth();
+    const { user } = useAuth();
     const { navigate } = useNavigation();
     const { updateProfile, fetchProfile } = useProfile();
 
@@ -212,127 +244,149 @@ const ProfileEdit: React.FC = () => {
         }
     };
 
-    // Enhanced form submission with proper error handling
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setStatus('submitting');
-        setError('');
-
-        try {
-            // Process form data
-            const processedData = processFormData(formData);
-
-            // Create FormData instance for file upload
-            const formDataToSubmit = new FormData();
-
-            // Add processsed fields to FormData
-            Object.entries(processedData).forEach(([key, value]) => {
-                if (value !== null && value !== undefined) {
-                    // Handle nested objects and arrays
-                if (typeof value === 'object') {
-                    formDataToSubmit.append(key, JSON.stringify(value));
-                } else {
-                    formDataToSubmit.append(key, String(value));
-                }
-                }
-            });
-
-            // Handle image upload
-            if (imageFile && croppedAreaPixels) {
-                const processedImage = await processCroppedImage();
-                if (processedImage) {
-                    formDataToSubmit.append('profilePicture', processedImage);
-                }
-            }
-
-            // Add user ID explicitly
-            if (user?.id) {
-                formDataToSubmit.append('user', user.id);
-            }
-
-            // Log the data being sent for debugging
-            console.log('Submitting profile update with data:', {
-                processedData,
-                formDataEntries: Array.from(formDataToSubmit.entries())
-            })
-
-            const token = localStorage.getItem('token');
-            if (!token) throw new Error('No authentication token found');
-
-            const response = await fetch('/api/v1/profiles', {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                body: formDataToSubmit
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to update profile');
-            }
-
-            // Submit the form data
-            const result = await updateProfile(processedData);
-
-            if (result.success) {
-                setStatus('success');
-                // Add a smsall delay before navigation
-                setTimeout(() => {
-                    if (user?.id) {
-                        navigate(`/profile/${user.id}`);
-                    }
-                }, 500);
-            } else {
-                throw new Error(result.error || 'Failed to update profile');
-            }
-        } catch (err) {
-            console.error('Profile update error:', err);
-            setStatus('error');
-            setError(err instanceof Error ? err.message : 'Failed to update profile');
-        }
-    };
-
     // Handle input changes
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
         const { name, value } = e.target;
-
+    
         setFormData(prev => {
-            switch (name) {
-                case 'yearsOfExperience':
-                  return { ...prev, [name]: value === '' ? 0 : parseInt(value, 10) };
+            // Handle specializations
+            if (name === 'specializations') {
+                // Split by comma and get the last item
+                const items = value.split(',');
+                const lastItem = items[items.length - 1].trim();
                 
-                case 'specializations':
-                    return { 
-                        ...prev, 
-                        specializationsInput: value,
-                        // Only update the array when a comma is added
-                        specializations: value.endsWith(',') 
-                          ? [...new Set([...prev.specializations, value.slice(0, -1).trim()])]
-                          : prev.specializations
-                      };
-          
-                case 'certifications':
-                    return { 
-                      ...prev,
-                      certificationsInput: value,
-                      // Only update the array when a comma is added
-                      certifications: {
-                        name: value.endsWith(',')
-                          ? [...new Set([...prev.certifications.name, value.slice(0, -1).trim()])]
-                          : prev.certifications.name
-                      }
+                // Only add new item if it ends with comma and isn't empty
+                if (value.endsWith(',') && lastItem !== '') {
+                    // Remove duplicates and empty values
+                    const newSpecializations = [...new Set([...prev.specializations, lastItem])]
+                        .filter(Boolean);
+                    
+                    return {
+                        ...prev,
+                        specializationsInput: '', // Clear input after adding
+                        specializations: newSpecializations
                     };
-          
-                default:
-                  return { ...prev, [name]: value };
+                }
+                
+                // Just update the input field
+                return {
+                    ...prev,
+                    specializationsInput: value
+                };
             }
+    
+            // Handle certifications
+            if (name === 'certifications') {
+                const items = value.split(',');
+                const lastItem = items[items.length - 1].trim();
+    
+                if (value.endsWith(',') && lastItem !== '') {
+                    const newCertifications = {
+                        name: [...new Set([...prev.certifications.name, lastItem])]
+                            .filter(Boolean)
+                    };
+    
+                    return {
+                        ...prev,
+                        certificationsInput: '', // Clear input after adding
+                        certifications: newCertifications
+                    };
+                }
+    
+                return {
+                    ...prev,
+                    certificationsInput: value
+                };
+            }
+    
+            // Handle other fields normally
+            return {
+                ...prev,
+                [name]: name === 'yearsOfExperience' 
+                    ? value === '' ? 0 : parseInt(value, 10)
+                    : value
+            };
+        });
+    };
+
+  // Update the form submission handling
+const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus('submitting');
+    setError('');
+
+    try {
+        // Create FormData instance
+        const formDataToSubmit = new FormData();
+    
+        // Process specializations
+        const currentSpecializations = processSpecializations(formData.specializations);
+        const newSpecializations = formData.specializationsInput
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
+        
+        const allSpecializations = [...new Set([...currentSpecializations, ...newSpecializations])];
+        formDataToSubmit.append('specializations', JSON.stringify(allSpecializations));
+        
+        // Process certifications
+        const currentCertifications = formData.certifications?.name || [];
+        const newCertifications = formData.certificationsInput
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
+        
+        const allCertifications = {
+            name: [...new Set([...currentCertifications, ...newCertifications])]
+        };
+    
+        // Add processed data to FormData
+        formDataToSubmit.append('certifications', JSON.stringify(allCertifications));
+    
+        // Add other fields
+        Object.entries(formData).forEach(([key, value]) => {
+          if (!['specializationsInput', 'certificationsInput', 'specializations', 'certifications'].includes(key) &&
+              value !== null && 
+              value !== undefined) {
+            formDataToSubmit.append(key, String(value));
+          }
         });
 
-        if (error) setError('');
-    };
+        // Handle image upload
+        if (imageFile && croppedAreaPixels) {
+            const processedImage = await processCroppedImage();
+            if (processedImage) {
+                formDataToSubmit.append('profilePicture', processedImage);
+            }
+        }
+
+        const response = await fetch('/api/v1/profiles', {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: formDataToSubmit
+        });
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+
+        setStatus('success');
+        // Use setTimeout to ensure state updates complete before navigation
+        setTimeout(() => {
+            if (user?.id) {
+                navigate(`/profile/${user.id}`);
+            }
+        }, 100);
+    } catch (err) {
+        console.error('Profile update error:', err);
+        setError(err instanceof Error ? err.message : 'Failed to update profile');
+        setStatus('error');
+    }
+};
 
     return (
         <div className="max-w-4xl mx-auto">

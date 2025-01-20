@@ -100,11 +100,12 @@ export const updateProfile = async (req, res, next) => {
         // Process certifications
         try {
             if (typeof profileData.certifications === 'string') {
-                profileData.certifications = JSON.parse(profileData.certifications);
-                // Ensure proper structure
-                if (!profileData.certifications.name || !Array.isArray(profileData.certifications.name)) {
-                    profileData.certifications = { name: [] };
-                }
+                const parsedCerts = JSON.parse(profileData.certifications);
+                profileData.certifications = {
+                    name: Array.isArray(parsedCerts.name) ? parsedCerts.name : []
+                };
+            } else if (!profileData.certifications || !Array.isArray(profileData.certifications.name)) {
+                profileData.certifications = { name: [] };
             }
         } catch (e) {
             logger.error('Error parsing certifications:', e);
@@ -116,9 +117,7 @@ export const updateProfile = async (req, res, next) => {
         console.log('Processing profile picture:', req.files.profilePicture);
 
         // Handle  single file or array of files
-        const file = Array.isArray(req.files.profilePicture)
-            ? req.files.profilePicture[0]
-            : req.files.profilePicture;
+        const file = req.files.profilePicture;
         
         // Create uploads directory if it doesn't exist
         const uploadPath = path.join(__dirname, '../../uploads/profiles');
@@ -151,17 +150,17 @@ export const updateProfile = async (req, res, next) => {
         { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
       );
   
-      // Also update the user's name
-      if (profileData.firstName && profileData.lastName) {
-        await User.findByIdAndUpdate(req.user.id, {
-          name: `${profileData.firstName} ${profileData.lastName}`
-        });
-      }
+    //   // Also update the user's name
+    //   if (profileData.firstName && profileData.lastName) {
+    //     await User.findByIdAndUpdate(req.user.id, {
+    //       name: `${profileData.firstName} ${profileData.lastName}`
+    //     });
+    //   }
 
-      logger.info('Profile updated successfully:', {
-        user: req.user.id,
-        profileId: profile._id
-      })
+    //   logger.info('Profile updated successfully:', {
+    //     user: req.user.id,
+    //     profileId: profile._id
+    //   })
   
       res.status(200).json({
         success: true,

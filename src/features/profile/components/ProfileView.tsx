@@ -21,181 +21,172 @@ import {
   Camera
 } from 'lucide-react';
 import { useNavigation } from '../../auth/hooks/useNavigation';
+import type { Profile } from '../types/profile.types';
+import { ProfileImage } from './ProfileImage';
 
-const ProfileView = ({ userId }) => {
-  // State management for profile data and loading states
-  const [profileData, setProfileData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);  
-  const { user: currentUser } = useAuth();
+const ProfileHeader: React.FC<{ 
+  profileData: Profile; 
+  isOwnProfile: boolean 
+}> = ({ 
+  profileData, 
+  isOwnProfile 
+}) => {
   const { navigate } = useNavigation();
-  const { fetchProfile } = useProfile();
 
-  // Default image for profiles without a picture
-  const defaultProfileImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='w-full h-full text-gray-400'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E";
+  return (
+    <div className="flex flex-col items-center md:flex-row md:justify-between md:items-start">
+      <div className="text-center md:text-left flex-1">
+        <ProfileImage profileData={profileData} />
+        <CardTitle className="text-2xl mt-4">
+          {`${profileData.firstName} ${profileData.lastName}`}
+        </CardTitle>
+        <CardTitle className="text-xl text-blue-300">
+          {profileData.professionalTitle}
+        </CardTitle>
+        <p className="text-gray-500">{profileData.company}</p>
+      </div>
+      {isOwnProfile && (
+        <button
+          onClick={() => navigate('/profile/edit')}
+          className="inline-flex items-center px-3 py-2 bg-blue-600 text-blue-100 rounded-lg hover:bg-blue-500"
+        >
+          <Edit className="w-4 h-4 mr-2" />
+          Edit Profile
+        </button>
+      )}
+    </div>
+  );
+};
+
+// SpecializationsList component to display a list of specializations
+const SpecializationsList = ({ specializations }) => {
+  if (!specializations) return null;
+
+  let specArray = [];
+  try {
+    if (Array.isArray(specializations)) {
+      // If it's already an array, use it
+      specArray = specializations.flat();
+    } else if (typeof specializations === 'string') {
+      // If it's a string, try to parse it
+      const parsed = JSON.parse(specializations);
+      specArray = Array.isArray(parsed) ? parsed.flat() : [parsed];
+    }
+  } catch (e) {
+    console.error('Error parsing specializations:', e);
+    return null;
+  }
+
+  // Filter out empty or invalid entries
+  specArray = specArray.filter(spec => spec && spec !== '[]');
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {specArray.map((spec, index) => (
+        <span
+          key={index}
+          className="px-3 py-1 bg-blue-500/10 text-blue-300 rounded-full text-sm"
+        >
+          {typeof spec === 'string' ? spec.trim() : JSON.stringify(spec)}
+        </span>
+      ))}
+    </div>
+  );
+};
+
+// Similarly for certifications
+const CertificationsList = ({ certifications }) => {
+if (!certifications?.name) return null;
+
+const certArray = Array.isArray(certifications?.name)
+  ? certifications.name
+  : [certifications.name].filter(Boolean);
+//   ? (typeof certifications === 'string'
+//       ? certifications.split(',')
+//       : Array.isArray(certifications)
+//         ? certifications
+//         : [])
+//   : [];
+
+return (
+<div className="flex flex-wrap gap-2">
+  {certArray.map((cert, index) => (
+    <div
+      key={index}
+      className="flex items-center px-3 py-1 bg-blue-500/10 text-blue-300 rounded-full text-sm"
+    >
+      <Award className="w-4 h-4 mr-2" />
+      {cert.trim()}
+    </div>
+  ))}
+</div>
+);
+};
+
+// Main ProfileView component
+const ProfileView: React.FC<{ userId: string }> = ({ userId }) => {
+  const [profileData, setProfileData] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { user: currentUser } = useAuth();
+  const { fetchProfile } = useProfile();
+  const { navigate } = useNavigation();
 
   useEffect(() => {
     const loadProfile = async () => {
-      if (!userId) {
-        console.log('No userId provided, skipping profile load');
-        return;
-      }
-  
+      if (!userId) return;
+
       try {
         setLoading(true);
         const result = await fetchProfile(userId);
-        console.log('Profile fetch result:', result);
-  
+
         if (!result.success) {
-          setError(result.error || 'Failed to load profile');
-          return;
+          throw new Error(result.error || 'Failed to load profile');
         }
-  
+
         setProfileData(result.data);
-        setError(null);
       } catch (err) {
-        console.error('Error loading profile:', err);
-        setError(err.message || 'Failed to load profile');
+        setError(err instanceof Error ? err.message : 'Failed to load profile');
       } finally {
         setLoading(false);
       }
     };
-  
+
     loadProfile();
   }, [userId, fetchProfile]);
 
-
-  const ProfileImage = () => {
-
-    if (profileData?.profilePicture?.url) {
-        return (
-          <img
-            src={profileData.profilePicture.url}
-            alt="Profile"
-            className="w-24 h-24 rounded-full object-cover border-2 border-blue-500"
-            onError={(e) => {
-              e.currentTarget.src = defaultProfileImage;
-            }}
-          />
-        );
-      }
-      
-      return (
-        <div className="w-24 h-24 rounded-full bg-gray-700 flex items-center justify-center">
-          <User className="w-12 h-12 text-blue-400" />
-        </div>
-      );
-    };
-
-    // SpecializationsList component to display a list of specializations
-    const SpecializationsList = ({ specializations }) => {
-        if (!specializations) return null;
-      
-        let specArray = [];
-        try {
-          if (Array.isArray(specializations)) {
-            // If it's already an array, use it
-            specArray = specializations.flat();
-          } else if (typeof specializations === 'string') {
-            // If it's a string, try to parse it
-            const parsed = JSON.parse(specializations);
-            specArray = Array.isArray(parsed) ? parsed.flat() : [parsed];
-          }
-        } catch (e) {
-          console.error('Error parsing specializations:', e);
-          return null;
-        }
-      
-        // Filter out empty or invalid entries
-        specArray = specArray.filter(spec => spec && spec !== '[]');
-      
-        return (
-          <div className="flex flex-wrap gap-2">
-            {specArray.map((spec, index) => (
-              <span
-                key={index}
-                className="px-3 py-1 bg-blue-500/10 text-blue-300 rounded-full text-sm"
-              >
-                {typeof spec === 'string' ? spec.trim() : JSON.stringify(spec)}
-              </span>
-            ))}
-          </div>
-        );
-      };
-
-    // Similarly for certifications
-  const CertificationsList = ({ certifications }) => {
-    if (!certifications?.name) return null;
-
-    const certArray = Array.isArray(certifications?.name)
-        ? certifications.name
-        : [certifications.name].filter(Boolean);
-    //   ? (typeof certifications === 'string'
-    //       ? certifications.split(',')
-    //       : Array.isArray(certifications)
-    //         ? certifications
-    //         : [])
-    //   : [];
+  if (loading) return <Loader center />;
+  if (error) return <Alert variant="destructive"><AlertCircle classname="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>;
   
+  if (!profileData) {
+    const isOwnProfile = currentUser?.id === userId;
     return (
-      <div className="flex flex-wrap gap-2">
-        {certArray.map((cert, index) => (
-          <div
-            key={index}
-            className="flex items-center px-3 py-1 bg-blue-500/10 text-blue-300 rounded-full text-sm"
-          >
-            <Award className="w-4 h-4 mr-2" />
-            {cert.trim()}
-          </div>
-        ))}
+      <div className="max-w-2xl mx-auto space-y-6">
+        <Card className="bg-gray-800 border border-blue-500/20">
+          <CardContent className="p-6">
+            <div className="text-center space-y-4">
+              <h2 className="text-xl font-semibold">
+                {isOwnProfile ? 'Complete Your Profile' : 'Profile Not Found'}
+              </h2>
+              {isOwnProfile && (
+                <button
+                  onClick={() => navigate('/profile/edit')}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-blue-100 rounded-lg hover:bg-blue-500"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Create Profile
+                </button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
-  };
-
-  if (loading) {
-    return <Loader center />;
   }
 
-  if (error) {
-    return (
-        <Alert variant="destructive" className="max-w-2xl mx-auto">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-        </Alert>
-    );
-  }
+  const isOwnProfile = currentUser?.id === profileData.user;
 
-  // Handle the case where no profile exists yet
-    if (!profileData) {
-        const isOwnProfile = currentUser?.id === userId;
-
-        return (
-            <div className="max-w-2xl mx-auto space-y-6">
-                <Card className="bg-gray-800 border border-blue-500/20">
-                    <CardContent className="p-6">
-                        <div className="text-center space-y-4">
-                            <h2 className="text-xl font-semibold">  
-                                {isOwnProfile ? 'Complete Your Profile' : 'Profile Not Found'}
-                            </h2>
-
-                            {isOwnProfile && (
-                                <button
-                                    onClick={() => navigate('/profile/edit')}
-                                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-blue-100 rounded-lg hover:bg-blue-500"
-                                >
-                                    <Edit className="w-4 h-4 mr-2" />
-                                    Create Profile
-                                </button>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
-
-    const isOwnProfile = currentUser?.id === profileData.user;
-
+  // Main return with all the profile content
     return (
         <div className="max-w-2xl mx-auto space-y-6">
             <Card className="bg-gray-800 border border-blue-500/20">

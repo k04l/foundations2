@@ -50,10 +50,13 @@ const profileSchema = new mongoose.Schema({
     default: []
   },
   certifications: {
-    type: [{
-      name: String
-    }],
-    default: []
+    type: {
+      name: {
+        type: [String],
+        default: []
+      },
+    },
+    default: () => ({ name: [] })
   },
 
   // Detailed Information
@@ -141,10 +144,48 @@ const profileSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Middleware to update lastUpdated timestamp
+// Middleware to clean up specializations
 profileSchema.pre('save', function(next) {
+  // Clean up specializations
+  if (this.specializations) {
+    try {
+      // Convert all items to strings and flatten any nested arrays
+      this.specializations = this.specializations
+        .map(item => {
+          if (typeof item === 'string') {
+            try {
+              // Try to parse if it's a JSON string
+              const parsed = JSON.parse(item);
+              return Array.isArray(parsed) ? parsed : [item];
+            } catch {
+              return [item];
+            }
+          }
+          return Array.isArray(item) ? item : [item];
+        })
+        .flat()
+        .filter(Boolean)
+        .map(item => item.toString().trim());
+
+      // Remove duplicates
+      this.specializations = [...new Set(this.specializations)];
+    } catch (error) {
+      console.error('Error processing specializations:', error);
+      this.specializations = [];
+    }
+  }
+
+  // Clean up certifications
+  if (this.certifications && Array.isArray(this.certifications.name)) {
+    this.certifications.name = [...new Set(this.certifications.name
+      .filter(Boolean)
+      .map(cert => cert.toString().trim())
+    )];
+  }
+
+  // Update lastUpdated timestamp
   this.lastUpdated = Date.now();
-  this.calculateCompletionStatus();
+  
   next();
 });
 

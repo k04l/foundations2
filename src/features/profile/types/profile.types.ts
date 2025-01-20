@@ -36,6 +36,11 @@ export interface Profile {
     certificationsInput: string;
   }
 
+export interface Certification {
+  name: string[];
+}
+
+
   // Highlight: Separated base profile data from form-specific data
 export interface ProfileBase {
   _id?: string;
@@ -46,9 +51,7 @@ export interface ProfileBase {
   company: string;
   yearsOfExperience: number;
   specializations: string[];
-  certifications: {
-    name: string[];
-  };
+  certifications: Certification;
   bio: string;
   contactEmail?: string;
   phoneNumber?: string;
