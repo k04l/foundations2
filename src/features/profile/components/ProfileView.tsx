@@ -252,12 +252,14 @@ const ProfileView: React.FC<{ userId: string }> = ({ userId }) => {
             <Card className="bg-gray-800 border border-blue-500/20">
                 <CardHeader>
                     <div className="flex flex-col items-center md:flex-row md:justify-between md:items-start">
-                        <div className="text-center md:text-left flex-1">
-                            <ProfileImage />
-                            <CardTitle className="text-2xl">{profileData.name || 'Joe Smith'}</CardTitle>
-                            <CardTitle className="text-2xl">{profileData.professionalTitle || 'Professional Title'}</CardTitle>
-                            <p className="text-gray-500">{profileData.company || 'Company'}</p>
-                        </div>
+                    <div className="text-center md:text-left flex-1">
+                        <ProfileImage profileData={profileData} />
+                        <CardTitle className="text-2xl">
+                            {`${profileData.firstName} ${profileData.lastName}`}
+                        </CardTitle>
+                        <CardTitle className="text-2xl">{profileData.professionalTitle}</CardTitle>
+                        <p className="text-gray-500">{profileData.company}</p>
+                    </div>
                         {isOwnProfile && (
                             <button
                                 onClick={() => navigate('/profile/edit')}
