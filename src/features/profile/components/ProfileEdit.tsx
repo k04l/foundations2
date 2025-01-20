@@ -2,13 +2,14 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
 import { Alert, AlertDescription } from '../../../components/ui/alert';
-import { AlertCircle, Save, Upload, X, Crop } from 'lucide-react';
+import { AlertCircle, Save, Upload, X, Crop, Award } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import Cropper from 'react-easy-crop';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useNavigation } from '../../auth/hooks/useNavigation';
 import { useProfile } from '../hooks/useProfile';
 import { ProfileFormData } from '../types/profile.types';
+import { ProfileImage } from './ProfileImage';
 
 // Define interfaces for state
 interface Area {
@@ -151,6 +152,22 @@ const ProfileEdit: React.FC = () => {
             }
         }
     }, []);
+
+    const handleDeleteSpecialization = (specToDelete: string) => {
+        setFormData(prev => ({
+          ...prev,
+          specializations: prev.specializations.filter(spec => spec !== specToDelete)
+        }));
+      };
+      
+      const handleDeleteCertification = (certToDelete: string) => {
+        setFormData(prev => ({
+          ...prev,
+          certifications: {
+            name: prev.certifications.name.filter(cert => cert !== certToDelete)
+          }
+        }));
+      };
 
     const processFormData = (data: ProfileFormData): ProcessedProfileData => {
         // Process specializations
@@ -312,7 +329,7 @@ const ProfileEdit: React.FC = () => {
     };
 
   // Update the form submission handling
-const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('submitting');
     setError('');
@@ -439,27 +456,33 @@ const handleSubmit = async (e: React.FormEvent) => {
                                 >
                                     <input {...getInputProps()} />
                                     <div className="flex flex-col items-center">
-                                        {imagePreview ? (
-                                            <div className="relative w-32 h-32 mb-4">
-                                                <img
-                                                    src={imagePreview}
-                                                    alt="Profile preview"
-                                                    className="w-full h-full rounded-full object-cover"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setImagePreview(null);
-                                                        setImageFile(null);
-                                                    }}
-                                                    className="absolute -top-2 -right-2 p-1 bg-red-500 rounded-full text-white hover:bg-red-600 transition-colors"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </button>
-                                            </div>
+                                    {imagePreview ? (
+                                        <div className="relative w-32 h-32 mb-4">
+                                            <ProfileImage 
+                                            profileData={{
+                                                profilePicture: {
+                                                url: imagePreview,
+                                                name: 'preview'
+                                                },
+                                                firstName: formData.firstName,
+                                                lastName: formData.lastName
+                                            }}
+                                            size="lg"
+                                            />
+                                            <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setImagePreview(null);
+                                                setImageFile(null);
+                                            }}
+                                            className="absolute -top-2 -right-2 p-1 bg-red-500 rounded-full text-white hover:bg-red-600 transition-colors"
+                                            >
+                                            <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                         ) : (
-                                            <Upload className="w-12 h-12 text-blue-500 mb-4" />
+                                        <Upload className="w-12 h-12 text-blue-500 mb-4" />
                                         )}
                                         <p className="text-blue-300 mb-2">
                                             {isDragActive
@@ -564,7 +587,10 @@ const handleSubmit = async (e: React.FormEvent) => {
                                 </div>
                             </div>
 
+                            // In your professional information section, replace the current specializations and certifications code with this:
+
                             <div>
+                                {/* Specializations Section */}
                                 <label className="block text-sm font-medium text-blue-300 mb-2">
                                     Specializations/Areas of Expertise
                                 </label>
@@ -578,16 +604,24 @@ const handleSubmit = async (e: React.FormEvent) => {
                                 />
 
                                 {/* Display current specializations */}
-                                    <div className="flex flex-wrap gap-2 mt-2">
+                                <div className="flex flex-wrap gap-2 mt-2">
                                     {formData.specializations.map((spec, index) => (
-                                        <span key={index} className="px-2 py-1 bg-blue-500/20 rounded-full text-sm">
-                                        {spec}
-                                        </span>
+                                        <div key={index} className="group relative inline-flex items-center px-3 py-1 bg-blue-500/20 rounded-full text-sm">
+                                            {spec}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDeleteSpecialization(spec)}
+                                                className="ml-2 p-1 rounded-full hover:bg-red-500/20"
+                                            >
+                                                <X className="w-3 h-3 text-red-400" />
+                                            </button>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
 
-                            <div>
+                            {/* Certifications Section */}
+                            <div className="mt-4">
                                 <label className="block text-sm font-medium text-blue-300 mb-2">
                                     Professional Certifications
                                 </label>
@@ -599,8 +633,24 @@ const handleSubmit = async (e: React.FormEvent) => {
                                     rows={2}
                                     placeholder="e.g., PE, LEED AP, CEM"
                                 />
+
+                                {/* Display current certifications */}
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    {formData.certifications.name.map((cert, index) => (
+                                        <div key={index} className="group relative inline-flex items-center px-3 py-1 bg-blue-500/20 rounded-full text-sm">
+                                            <Award className="w-4 h-4 mr-2" />
+                                            {cert}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDeleteCertification(cert)}
+                                                className="ml-2 p-1 rounded-full hover:bg-red-500/20"
+                                            >
+                                                <X className="w-3 h-3 text-red-400" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
 
                         {/* About Section */}
                         <div className="space-y-4">
@@ -705,10 +755,11 @@ const handleSubmit = async (e: React.FormEvent) => {
                                 </span>
                             </button>
                         </div>
-                    </form>
-                </CardContent>
-            </Card>
-        </div>
+                    </div>
+                </form>
+            </CardContent>
+        </Card>
+    </div>
     );
 };
 

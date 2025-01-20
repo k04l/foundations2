@@ -24,6 +24,30 @@ import { useNavigation } from '../../auth/hooks/useNavigation';
 import type { Profile } from '../types/profile.types';
 import { ProfileImage } from './ProfileImage';
 
+// Helper function for parsing specializations
+const parseSpecializations = (specs: any[]): string[] => {
+  if (!specs) return [];
+  
+  return specs.reduce((acc: string[], item) => {
+    try {
+      if (typeof item === 'string') {
+        // Try to parse JSON strings
+        try {
+          const parsed = JSON.parse(item);
+          return acc.concat(Array.isArray(parsed) ? parsed : [item]);
+        } catch {
+          // If not valid JSON, treat as regular string
+          return acc.concat([item]);
+        }
+      }
+      return acc;
+    } catch (error) {
+      console.error('Error parsing specialization:', error);
+      return acc;
+    }
+  }, []);
+};
+
 const ProfileHeader: React.FC<{ 
   profileData: Profile; 
   isOwnProfile: boolean 
@@ -32,23 +56,59 @@ const ProfileHeader: React.FC<{
   isOwnProfile 
 }) => {
   const { navigate } = useNavigation();
+  const { updateProfile } = useProfile();
+
+  const handleDeleteSpecialization = async (specToDelete: string) => {
+    if (!isOwnProfile) return;
+    
+    const currentSpecs = parseSpecializations(profileData.specializations);
+    const updatedSpecs = currentSpecs.filter(spec => spec !== specToDelete);
+    
+    try {
+      await updateProfile({
+        ...profileData,
+        specializations: updatedSpecs
+      });
+    } catch (error) {
+      console.error('Error deleting specialization:', error);
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center md:flex-row md:justify-between md:items-start">
-      <div className="text-center md:text-left flex-1">
-        <ProfileImage profileData={profileData} />
-        <CardTitle className="text-2xl mt-4">
-          {`${profileData.firstName} ${profileData.lastName}`}
-        </CardTitle>
-        <CardTitle className="text-xl text-blue-300">
-          {profileData.professionalTitle}
-        </CardTitle>
-        <p className="text-gray-500">{profileData.company}</p>
+    <div className="text-center md:text-left flex-1">
+      <ProfileImage profileData={profileData} />
+      <h1 className="text-2xl font-bold text-blue-100 mt-4">
+        {`${profileData.firstName} ${profileData.lastName}`}
+      </h1>
+      <h2 className="text-xl text-blue-300">
+        {profileData.professionalTitle}
+      </h2>
+      <p className="text-gray-500">{profileData.company}</p>
+      
+      {/* Specializations Section */}
+      <div className="mt-4">
+        <h3 className="text-lg font-semibold text-blue-100 mb-2">Specializations</h3>
+        <div className="flex flex-wrap gap-2">
+          {parseSpecializations(profileData.specializations).map((spec, index) => (
+            <div key={index} className="group relative inline-flex items-center px-3 py-1 bg-blue-500/20 rounded-full text-sm">
+              {spec}
+              {isOwnProfile && (
+                <button
+                  onClick={() => handleDeleteSpecialization(spec)}
+                  className="ml-2 p-1 rounded-full hover:bg-red-500/20 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="w-3 h-3 text-red-400" />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
+      
       {isOwnProfile && (
         <button
           onClick={() => navigate('/profile/edit')}
-          className="inline-flex items-center px-3 py-2 bg-blue-600 text-blue-100 rounded-lg hover:bg-blue-500"
+          className="inline-flex items-center px-3 py-2 mt-4 bg-blue-600 text-blue-100 rounded-lg hover:bg-blue-500"
         >
           <Edit className="w-4 h-4 mr-2" />
           Edit Profile
