@@ -20,17 +20,24 @@ export default defineConfig({
     }
   },
 
+  define: {
+    'import.meta.env.VITE_API_URL': JSON.stringify('http://localhost:3000')
+  },
+
   // Path aliases make imports cleaner and more maintainable
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      'src': path.resolve(__dirname, './src')
+      // 'src': path.resolve(__dirname, './src')
     }
   },
 
   // Development server configuration
   server: {
-    port: 5173, // Explicitly set frontend port
+    // port: 5173, // Explicitly set frontend port
+    // Increase timeout for large file uploads
+    timeout: 120000,
+
     proxy: {
       // Proxy all /api requests to your backend server
       '/api': {
@@ -45,24 +52,25 @@ export default defineConfig({
         
         // Enable WebSocket proxy
         ws: true,
+        configure: (proxy, options) => {
+          proxy.on('error', (err, req, res) => {
+              console.error('Proxy error:', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+              console.log('Proxying request:', {
+                  method: req.method,
+                  url: req.url,
+                  headers: proxyReq.getHeaders()
+              });
+          });
+        },
+
+
         
         // Rewrite function to help with debugging
         rewrite: (path) => {
           console.log(`Proxying request: ${path}`);
           return path;
-        },
-
-        // Configure proxy to handle all HTTP methods
-        configure: (proxy, _options) => {
-          proxy.on('error', (err, _req, _res) => {
-            console.log('Proxy error:', err);
-          });
-          proxy.on('proxyReq', (proxyReq, req, _res) => {
-            console.log('Proxy request:', req.method, req.url);
-          });
-          proxy.on('proxyRes', (proxyRes, req, _res) => {
-            console.log('Proxy response:', proxyRes.statusCode, req.url);
-          });
         },
 
       }

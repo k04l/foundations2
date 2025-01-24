@@ -40,6 +40,10 @@ export interface Certification {
   name: string[];
 }
 
+export interface ProfilePictureData {
+  url?: string;
+  name?: string;
+}
 
   // Highlight: Separated base profile data from form-specific data
 export interface ProfileBase {
@@ -81,29 +85,6 @@ export interface Profile extends ProfileBase {
   createdAt: Date;
   updatedAt: Date;
 }
-  
-  // export interface ProfileFormData {
-  //   user?: string;
-  //   firstName: string;
-  //   lastName: string;
-  //   professionalTitle: string;
-  //   company: string;
-  //   yearsOfExperience: number;
-  //   specializations: string[];
-  //   specializationsInput: string; 
-  //   certifications: {
-  //       name: string[];
-  //   };
-  //   certificationsInput: string;
-  //   bio: string;
-  //   contactEmail?: string;
-  //   phoneNumber?: string;
-  //   linkedin?: string;
-  //   twitter?: string;
-  //   isNew?: boolean;
-  //   // profilePicture: File;
-  //   // isPublic?: boolean;
-  // }
 
   // Form data interface base profile and input state
   export interface ProfileFormData extends ProfileBase, ProfileInputState {
@@ -115,4 +96,13 @@ export interface Profile extends ProfileBase {
     y: number;
     width: number;
     height: number;
+  }
+
+  export interface SectionProps {
+    formData: ProfileFormData;
+    handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+    handleDelete?: {
+      handleDeleteSpecialization: (spec: string) => void;
+      handleDeleteCertification: (cert: string) => void;
+    };
   }

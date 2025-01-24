@@ -39,19 +39,17 @@
       - profile.model.js
       - user.model.js
     - server.js
-    - uploads
-      - profiles
-        - 1737241464140-profile-image.jpg
-        - 1737258352154-profile-image.jpg
-        - 1737264425897-profile-image.jpg
-        - 1737265600052-profile-image.jpg
-        - 1737272469937-profile-image.jpg
     - utils
+      - dataProcessing.js
       - email.js
       - logger.js
   - test-server.js
+  - tmp
   - uploads
     - profiles
+      - 1737395591034-profile-image.jpg
+      - 1737396010788-profile-image.jpg
+      - 1737397005109-profile-image.jpg
 - backup
   - your-database
     - users.bson
@@ -79,7 +77,6 @@
   - bernoullia-logo.svg
   - components
     - Logo.jsx
-    - ProfileImage.tsx
     - Routes.tsx
     - ui
       - alert.jsx
@@ -125,9 +122,20 @@
       - components
         - index.ts
         - ProfileEdit.tsx
+        - ProfileImage.tsx
+        - ProfileSections
+          - AboutSection.tsx
+          - ContactInfo.tsx
+          - ImageUploadSection.tsx
+          - index.ts
+          - PersonalInfo.tsx
+          - ProfessionalInfo.tsx
+          - SubmitButton.tsx
         - ProfileView.tsx
       - hooks
         - useProfile.ts
+        - useProfileForm.ts
+        - useProfileImage.ts
       - types
         - profile.types.ts
       - utils
