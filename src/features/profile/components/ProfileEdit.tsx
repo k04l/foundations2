@@ -104,45 +104,46 @@ const ProfileEdit: React.FC = () => {
     // const [croppedImageDisplay, setCroppedImageDisplay] = useState<string | null>(null);
 
 
-    // Fetch existing profile data
+    // Memoize the profile loading effect
     useEffect(() => {
-        const loadProfile = async () => {
-            if (user?.id) {
-                try {
-                    const result = await fetchProfile(user.id);
-                    if (result.success && result.data) {
-                        // Update form data
-                        formHandling.setFormData(prevData => ({
-                            ...prevData,
-                            ...result.data,
-                            specializations: Array.isArray(result.data.specializations)
-                                ? result.data.specializations
-                                : [],
-                            certifications: {
-                                name: Array.isArray(result.data.certifications?.name)
-                                    ? result.data.certifications.name
-                                    : []
-                            }
-                        }));
+        let mounted = true;
 
-                        // Set profile picture preview if it exists
-                        if (result.data.profilePicture?.url) {
-                            // Check if the URL is valid
-                            const imageUrl = result.data.profilePicture.url.startsWith('http')
-                                ? result.data.profilePicture.url
-                                : `${window.location.origin}${result.data.profilePicture.url}`;    
-                            imageHandling.setImagePreview(imageUrl);
+        const loadProfile = async () => {
+            if (!user?.id) return;
+
+            try {
+                const result = await fetchProfile(user.id);
+                if (!mounted) return;
+
+                if (result.success && result.data) {
+                    formHandling.setFormData(prev => ({
+                        ...prev,
+                        ...result.data,
+                        specializations: Array.isArray(result.data.specializations)
+                            ? result.data.specializations
+                            : [],
+                        certifications: {
+                            name: Array.isArray(result.data.certifications?.name)
+                                ? result.data.certifications.name
+                                : []
                         }
+                    }));
+
+                    if (result.data.profilePicture?.url) {
+                        imageHandling.setImagePreview(result.data.profilePicture.url);
                     }
-                } catch (err) {
-                    console.error('Error loading profile:', err);
-                    setError('Failed to load profile data');
                 }
+            } catch (err) {
+                console.error('Error loading profile:', err);
             }
         };
         
         loadProfile();
-    }, [user, fetchProfile, formHandling.setFormData, imageHandling.setImagePreview]);
+
+        return () => {
+            mounted = false;
+        };
+    }, [user?.id, fetchProfile]);
 
     // Add cleanup on component unmount
     useEffect(() => {

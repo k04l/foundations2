@@ -76,15 +76,13 @@ export const ProfessionalInfo: React.FC<ProfessionalInfoProps> = ({
                                 </div>
                             </div>
 
-                            // In your professional information section, replace the current specializations and certifications code with this:
-
                             <div>
                                 {/* Specializations Section */}
                                 <label className="block text-sm font-medium text-blue-300 mb-2">
                                     Specializations/Areas of Expertise
                                 </label>
                                 <textarea
-                                    name="specializations"
+                                    name="specializationsInput"
                                     value={formData.specializationsInput}
                                     onChange={handleChange}
                                     className="w-full px-3 py-2 bg-gray-700 border border-blue-500/20 rounded-md text-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -115,7 +113,7 @@ export const ProfessionalInfo: React.FC<ProfessionalInfoProps> = ({
                                     Professional Certifications
                                 </label>
                                 <textarea
-                                    name="certifications"
+                                    name="certificationsInput"
                                     value={formData.certificationsInput}
                                     onChange={handleChange}
                                     className="w-full px-3 py-2 bg-gray-700 border border-blue-500/20 rounded-md text-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"

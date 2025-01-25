@@ -53,7 +53,7 @@ export interface ProfileBase {
   lastName: string;
   professionalTitle: string;
   company: string;
-  yearsOfExperience: number;
+  yearsOfExperience: number | null;
   specializations: string[];
   certifications: Certification;
   bio: string;
