@@ -1,7 +1,7 @@
 // src/features/profile/components/ProfileEdit.tsx
 import React, { useState, useCallback, useEffect } from 'react';
 // UI Components
-import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '../../../components/ui/alert';
 import { AlertCircle, Save, Upload, X, Crop, Award } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
@@ -24,7 +24,7 @@ import { useProfileForm } from '../hooks/useProfileForm';
 import { useProfileImage } from '../hooks/useProfileImage';
 
 // Types
-import { ProfileFormData, Area, ProfilePictureData } from '../types/profile.types';
+import { ProfileFormData, ProcessedProfileData } from '../types/profile.types';
 
 
 // const processSpecializations = (specializations: any): string[] => {
@@ -88,6 +88,8 @@ const ProfileEdit: React.FC = () => {
     // Use it in your hook
     const formHandling = useProfileForm(initialFormData);
 
+    const { formData, inputState, handleChange, handleDeleteSpecialization, handleDeleteCertification } = formHandling;
+
     // UI state management
     const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
     const [error, setError] = useState<string>('');
@@ -113,9 +115,8 @@ const ProfileEdit: React.FC = () => {
 
             try {
                 const result = await fetchProfile(user.id);
-                if (!mounted) return;
+                if (!mounted || !result?.success || !result?.data) return;
 
-                if (result.success && result.data) {
                     formHandling.setFormData(prev => ({
                         ...prev,
                         ...result.data,
@@ -132,7 +133,7 @@ const ProfileEdit: React.FC = () => {
                     if (result.data.profilePicture?.url) {
                         imageHandling.setImagePreview(result.data.profilePicture.url);
                     }
-                }
+                
             } catch (err) {
                 console.error('Error loading profile:', err);
             }
@@ -143,7 +144,7 @@ const ProfileEdit: React.FC = () => {
         return () => {
             mounted = false;
         };
-    }, [user?.id, fetchProfile]);
+    }, [user?.id, fetchProfile, formHandling.setFormData, imageHandling.setImagePreview]);
 
     // Add cleanup on component unmount
     useEffect(() => {
@@ -186,28 +187,30 @@ const ProfileEdit: React.FC = () => {
 
     const processFormData = (data: ProfileFormData): ProcessedProfileData => {
         // Process specializations
-        const specializations = [
+        const specializations = Array.from(new Set([
             ...data.specializations,
-            ...(data.specializationsInput
+            ...data.specializationsInput
                 .split(',')
                 .map(s => s.trim())
-                .filter(Boolean))
-        ];
+                .filter(Boolean)
+        ]));
     
         // Process certifications
         const certifications = {
-            name: [
-                ...data.certifications.name,
-                ...(data.certificationsInput
+            name: Array.from (new Set([
+                ...(data.certifications?.name || []),
+                ...data.certificationsInput
                     .split(',')
                     .map(s => s.trim())
-                    .filter(Boolean))
-            ]
+                    .filter(Boolean)
+            ]))
         };
+
+        const { specializationsInput, certificationsInput, ...rest } = data;
     
         // Return cleaned data without the input fields
         return {
-            ...data,
+            ...rest,
             specializations,
             certifications
         };        
@@ -475,6 +478,7 @@ const ProfileEdit: React.FC = () => {
                         />
                         <ProfessionalInfo 
                             formData={formHandling.formData}
+                            inputState={inputState}
                             handleChange={formHandling.handleChange}
                             handleDeleteSpecialization={formHandling.handleDeleteSpecialization}
                             handleDeleteCertification={formHandling.handleDeleteCertification}

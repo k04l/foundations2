@@ -1,13 +1,39 @@
 // src/features/profile/components/ImageUploadSection.tsx
-import React, { useState } from 'react';
+import React from 'react';
 import { Upload, X, Crop, Camera } from 'lucide-react';
 import Cropper from 'react-easy-crop';
+// import { Area } from 'react-easy-crop/types';
 import { ProfileImage } from '../ProfileImage';
 // import { SectionProps } from '../../types/profile.types';
-import { FC } from 'react';
+// import { FC } from 'react';
 
+// Define more specific types for the crop area
+interface CropArea {
+    x: number;
+    y: number;
+}
 
-interface ImageUploadSectionProps {
+// Define the profile picture type
+interface ProfilePicture {
+    url: string;
+    name: string;
+}
+
+// Define form data type
+interface FormData {
+    firstName: string;
+    lastName: string;
+    profilePicture?: ProfilePicture;
+}
+
+// Props for root and input from react-dropzone
+interface DropzoneProps {
+    getRootProps: () => any;
+    getInputProps: () => any;
+    isDragActive: boolean;
+}
+
+interface ImageUploadSectionProps extends DropzoneProps {
     imagePreview: string | null;
     isCropping: boolean;
     crop: { x: number; y: number };
@@ -21,8 +47,9 @@ interface ImageUploadSectionProps {
     formData: {
         firstName: string;
         lastName: string;
-        profilePicture: {
-            url?: string;
+        profilePicture?: {
+            url: string;
+            name: string;
         };
     };
     getRootProps: any;
@@ -33,7 +60,7 @@ interface ImageUploadSectionProps {
     setCroppedPreview: (preview: string | null) => void;
 }
 
-export const ImageUploadSection: FC<ImageUploadSectionProps> = ({
+export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
     imagePreview,
     isCropping,
     crop,
@@ -52,48 +79,45 @@ export const ImageUploadSection: FC<ImageUploadSectionProps> = ({
     setImagePreview,
     setCroppedPreview
 }) => {
-    const [error, setError] = useState<string | null>(null);
+    // Get the current image URL, with proper type handling
+    const currentImageUrl = React.useMemo(() => 
+        croppedPreview || imagePreview || formData?.profilePicture?.url || '', 
+        [croppedPreview, imagePreview, formData?.profilePicture?.url]
+    );
 
     // Handle image removal with cleanup
-    const handleImageRemoval = async (e: React.MouseEvent) => {
-        if (e) {
+    const handleImageRemoval =  React.useCallback(async (e: React.MouseEvent) => {
+            // Ensure all event propagation is stopped
             e.preventDefault();
             e.stopPropagation();
-        }
-    
+
         try {
-            // Clean up URLs with proper error handling
-            if (croppedPreview) {
-                try {
-                    URL.revokeObjectURL(croppedPreview);
-                } catch (error) {
-                    console.error('Error revoking cropped preview URL:', error);
-                }
-            }
-            
-            if (imagePreview?.startsWith('blob:')) {
-                try {
-                    URL.revokeObjectURL(imagePreview);
-                } catch (error) {
-                    console.error('Error revoking image preview URL:', error);
-                }
-            }
-    
-            // Reset all image-related state in specific order
+            // First, store all the URLs we need to revoke
+            const urlsToRevoke = [
+                croppedPreview,
+                imagePreview?.startsWith('blob:') ? imagePreview : null
+            ].filter((url): url is string => Boolean(url));
+
+            // Then reset all state
+            setImageFile(null);
             setCroppedPreview(null);
             setImagePreview(null);
-            setImageFile(null);
-            
-            // Only show error if something actually fails
-            setError(null);
+
+            // Clean up URLs
+            urlsToRevoke.forEach(url => {
+                try {
+                    URL.revokeObjectURL(url);
+                } catch (err) {
+                    console.error('Error revoking URL:', err);
+                }
+            });
         } catch (err) {
             console.error('Error removing image:', err);
-            setError('Failed to remove image. Please try again.');
         }
-    };
+    }, [croppedPreview, imagePreview, setImageFile, setCroppedPreview, setImagePreview]);
 
-    // Get the current image URL, with proper type handling
-    const currentImageUrl = croppedPreview || imagePreview || formData?.profilePicture?.url || '';
+    // // Get the current image URL, with proper type handling
+    // const currentImageUrl = croppedPreview || imagePreview || formData?.profilePicture?.url || '';
 
     return (
 
@@ -143,7 +167,7 @@ export const ImageUploadSection: FC<ImageUploadSectionProps> = ({
 
                 {currentImageUrl ? (
                         <div className="flex flex-col items-center">
-                            <div className="relative">
+                            <div className="relative group">
                                 <ProfileImage 
                                     profileData={{
                                         profilePicture: {
@@ -154,17 +178,11 @@ export const ImageUploadSection: FC<ImageUploadSectionProps> = ({
                                         lastName: formData.lastName
                                     }}
                                     size="lg"
-                                    onError={(error) => {
-                                        console.error('Profile image error:', error);
-                                        handleImageRemoval(new MouseEvent('click') as any);
-                                    }}
                                 />
+                                
                                 <button
                                     type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();  // Stop event from reaching dropzone
-                                        handleImageRemoval(e);
-                                    }}
+                                    onClick={handleImageRemoval}
                                     className="absolute -top-2 -right-2 p-1 bg-red-500 rounded-full text-white 
                                              hover:bg-red-600 transition-colors z-10"
                                     aria-label="Remove profile picture"
@@ -195,7 +213,7 @@ export const ImageUploadSection: FC<ImageUploadSectionProps> = ({
         </div>
     )}
     
-    {/* Error message display for image loading/processing errors */}
+    {/* Error message display for image loading/processing errors
     <div role="alert" aria-live="polite" className="min-h-[1.5rem]">
         {error && (
             <p className="text-red-400 text-sm mt-2">
@@ -203,6 +221,10 @@ export const ImageUploadSection: FC<ImageUploadSectionProps> = ({
             </p>
         )}
     </div>
+</div> */}
+
 </div>
 );
-};
+}
+
+export default ImageUploadSection;

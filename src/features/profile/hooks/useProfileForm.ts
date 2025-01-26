@@ -3,61 +3,88 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { debounce } from 'lodash';
 import { ProfileFormData } from '../types/profile.types';
 
+// Helper type for our field names to ensure type safety
+type ArrayFieldName = 'specializations' | 'certifications';
+
 export const useProfileForm = (initialData: ProfileFormData) => {
+    // Define explicit types for our state
     const [formData, setFormData] = useState<ProfileFormData>({
         ...initialData,
         specializationsInput: '',
         certificationsInput: '',
-        specializations: initialData.specializations || [],
+        // Ensure arrays are properly initialized
+        specializations: Array.isArray(initialData.specializations) 
+            ? initialData.specializations 
+            : [],
         certifications: {
-            name: initialData.certifications?.name || []
+            name: Array.isArray(initialData.certifications?.name)
+                ? initialData.certifications.name
+                : []
         }
         // yearsOfExperience: initialData.yearsOfExperience ?? null  // Note: Allow empty string
       });
 
     // Separate state for input fields to prevent value conflicts
-    const [inputState, setInputState] = useState({
+    const [inputState, setInputState] = useState<{
+        specializationsInput: string,
+        certificationsInput: string
+    }>({
         specializationsInput: '',
         certificationsInput: ''
     });
 
 
-    // Memoize the processing functions to prevent recreation on every render
+    // Type-safe input processor
     const processInput = useMemo(() => {
         return (input: string): string[] => {
             return input
                 .split(',')
-                .map(item => item.trim())
-                .filter(Boolean);
+                .map((item: string) => item.trim())
+                .filter((item: string): item is string => 
+                    typeof item === 'string' && item.length > 0
+                );
         };
     }, []);
 
     // Debounced function to handle array updates
-    const updateArrayField = useMemo(() => 
-        debounce((fieldName: 'specializations' | 'certifications', values: string[]) => {
+    const updateArrayField = useMemo(() => {
+        const handler = (fieldName: ArrayFieldName, values: string[]) => {
             setFormData(prev => {
                 if (fieldName === 'specializations') {
+                    // For specializations, update the array directly
+                    const updatedSpecializations = [...new Set([
+                        ...prev.specializations,
+                        ...values
+                    ])];
                     return {
                         ...prev,
-                        specializations: [...new Set([...prev.specializations, ...values])]
+                        specializations: updatedSpecializations
                     };
                 } else {
+                    // For certifications, update the nested name array
+                    const updatedCertifications = {
+                        name: [...new Set([
+                            ...(prev.certifications?.name || []),
+                            ...values
+                        ])]
+                    };
                     return {
                         ...prev,
-                        certifications: {
-                            name: [...new Set([...prev.certifications.name, ...values])]
-                        }
+                        certifications: updatedCertifications
                     };
                 }
             });
+
             // Clear the corresponding input
             setInputState(prev => ({
                 ...prev,
                 [`${fieldName}Input`]: ''
             }));
-        }, 300), // 300ms debounce
-        []
-    );
+        };
+
+        // Debounce the handler to prevent rapid updates
+        return debounce(handler, 300);
+    }, []);
 
     // Improved change handler with type safety
     const handleChange = useCallback((
@@ -65,30 +92,44 @@ export const useProfileForm = (initialData: ProfileFormData) => {
     ) => {
         const { name, value } = e.target;
 
+        // Add some debugging to help track state changes
+        console.debug('Form change:', { name, value });
+
         // Handle specializations and certifications inputs
         if (name === 'specializationsInput' || name === 'certificationsInput') {
-            setInputState(prev => ({ ...prev, [name]: value }));
+            // Immediately update input state
+            setInputState(prev => ({
+                ...prev,
+                [name]: value
+            }));
 
-            // Process if comma or enter is detected
-            if (value.endsWith(',') || value.endsWith('\n')) {
-                const processedValue = value.replace(/[,\n]$/, '');
+            // If the value ends with comma or enter, process it
+        if (value.endsWith(',') || value.endsWith('\n')) {
+            const fieldName = name === 'specializationsInput' 
+                ? 'specializations' 
+                : 'certifications';
+            const processedValue = value.replace(/[,\n]$/, '').trim();
+            
+            if (processedValue) {
                 const newItems = processInput(processedValue);
-                
-                if (newItems.length > 0) {
-                    updateArrayField(
-                        name === 'specializationsInput' ? 'specializations' : 'certifications',
-                        newItems
-                    );
-                }
+                updateArrayField(fieldName, newItems);
+
+                // Log update for debugging
+                console.log('Array field update:', {
+                    fieldName,
+                    processedValue,
+                    newItems
+                });
             }
-            return;
         }
+        return;
+    }
 
         // Special handling for years of experience
     if (name === 'yearsOfExperience') {
         // If the value is empty, set to null
         if (value === '') {
-            setFormData(prev => ({ ...prev, [name]: null }));
+            setFormData(prev => ({ ...prev, [name]: 0 }));
             return;
         }
         // Only update if it's a valid number

@@ -15,7 +15,7 @@ interface ProfileImageProps {
     lastName?: string;
   };
   size?: 'sm' | 'md' | 'lg';
-//   onError?: (error: Error) => void;
+  onError?: (error: any) => void;
 //   setImageFile: (file: File | null) => void;
 //   setImagePreview: (preview: string | null) => void;
 //   setCroppedPreview: (preview: string | null) => void;
