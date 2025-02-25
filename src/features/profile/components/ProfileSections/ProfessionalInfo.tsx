@@ -22,6 +22,7 @@ interface ProfessionalInfoProps {
     handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
     handleDeleteSpecialization: (spec: string) => void;
     handleDeleteCertification: (cert: string) => void;
+    
 }
 
 export const ProfessionalInfo: React.FC<ProfessionalInfoProps> = ({
@@ -29,11 +30,20 @@ export const ProfessionalInfo: React.FC<ProfessionalInfoProps> = ({
     inputState,
     handleChange, 
     handleDeleteSpecialization,
-    handleDeleteCertification
+    handleDeleteCertification,
+    handleEnterPress // 
 }) => {
     // Safely access the arrays with fallbacks
     const specializations = Array.isArray(formData.specializations) ? formData.specializations : [];
     const certifications = Array.isArray(formData.certifications?.name) ? formData.certifications.name : [];
+
+    // Handle Enter key press for specializations and certifications
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, field: 'specializations' | 'certifications') => {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Prevent new line
+            handleEnterPress(field);
+        }
+    };
 
     console.debug('Professional Info render:', {
         specializations,
@@ -103,6 +113,7 @@ export const ProfessionalInfo: React.FC<ProfessionalInfoProps> = ({
                     name="specializationsInput"
                     value={inputState.specializationsInput || ''}
                     onChange={handleChange}
+                    onKeyDown={(e) => handleKeyDown(e, 'specializations')}
                     className="w-full px-3 py-2 bg-gray-700 border border-blue-500/20 rounded-md text-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     rows={3}
                     placeholder="Type specializations separated by commas..."
@@ -134,6 +145,7 @@ export const ProfessionalInfo: React.FC<ProfessionalInfoProps> = ({
                     name="certificationsInput"
                     value={inputState.certificationsInput || ''}
                     onChange={handleChange}
+                    onKeyDown={(e) => handleKeyDown(e, 'certifications')}
                     className="w-full px-3 py-2 bg-gray-700 border border-blue-500/20 rounded-md text-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     rows={2}
                     placeholder="e.g., PE, LEED AP, CEM"

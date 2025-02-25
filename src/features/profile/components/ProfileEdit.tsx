@@ -92,7 +92,8 @@ const ProfileEdit: React.FC = () => {
         handleChange, 
         handleDeleteSpecialization, 
         handleDeleteCertification,
-        getProcessedData 
+        handleEnterPress,
+        getProcessedData
     } = useProfileForm(initialFormData);
 
     // UI state management
@@ -487,6 +488,7 @@ const ProfileEdit: React.FC = () => {
                             handleChange={handleChange}
                             handleDeleteSpecialization={handleDeleteSpecialization}
                             handleDeleteCertification={handleDeleteCertification}
+                            handleEnterPress={handleEnterPress}
                         />
                         <AboutSection 
                             formData={formData}

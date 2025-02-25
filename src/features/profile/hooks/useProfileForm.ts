@@ -38,7 +38,6 @@ export const useProfileForm = (initialData: ProfileFormData) => {
         return initialState;
     });
 
-
     // Add a setFormData function that works with our state structure
     const setFormData = useCallback((updater: (prev: ProfileFormData) => ProfileFormData) => {
         setFormState(prev => ({
@@ -75,6 +74,30 @@ export const useProfileForm = (initialData: ProfileFormData) => {
             return newState;
         });
     }, []);
+
+    const handleEnterPress = useCallback((field: 'specializations' | 'certifications') => {
+        const inputField = field === 'specializations' ? 'specializationsInput' : 'certificationsInput';
+        const currentInput = formState.inputState[inputField].trim();
+
+        if (currentInput) {
+            updateFormState(prev => {
+                const newState = { ...prev };
+
+                if (field === 'specializations') {
+                    newState.formData.specializations = [
+                        ...new Set([...prev.formData.specializations, currentInput])
+                    ];
+                    newState.inputState.specializationsInput = '';
+                } else {
+                    newState.formData.certifications.name = [
+                        ...new Set([...prev.formData.certifications.name, currentInput])
+                    ];
+                    newState.inputState.certificationsInput = '';
+                }
+                return newState;
+            });
+        }
+    }, [formState, updateFormState]);
 
     // // Debounced function to handle array updates
     // const updateArrayField = useMemo(() => {
@@ -267,6 +290,7 @@ export const useProfileForm = (initialData: ProfileFormData) => {
         handleChange,
         handleDeleteSpecialization,
         handleDeleteCertification,
+        handleEnterPress,
         getProcessedData
     }
 };
