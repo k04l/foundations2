@@ -1,179 +1,272 @@
 // hooks/useProfileForm.ts
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { debounce } from 'lodash';
 import { ProfileFormData } from '../types/profile.types';
 
 // Helper type for our field names to ensure type safety
 type ArrayFieldName = 'specializations' | 'certifications';
 
-export const useProfileForm = (initialData: ProfileFormData) => {
-    // Define explicit types for our state
-    const [formData, setFormData] = useState<ProfileFormData>({
-        ...initialData,
-        specializationsInput: '',
-        certificationsInput: '',
-        // Ensure arrays are properly initialized
-        specializations: Array.isArray(initialData.specializations) 
-            ? initialData.specializations 
-            : [],
-        certifications: {
-            name: Array.isArray(initialData.certifications?.name)
-                ? initialData.certifications.name
-                : []
-        }
-        // yearsOfExperience: initialData.yearsOfExperience ?? null  // Note: Allow empty string
-      });
+interface FormState {
+    formData: ProfileFormData;
+    inputState: {
+        specializationsInput: string;
+        certificationsInput: string;
+    };
+}
 
-    // Separate state for input fields to prevent value conflicts
-    const [inputState, setInputState] = useState<{
-        specializationsInput: string,
-        certificationsInput: string
-    }>({
-        specializationsInput: '',
-        certificationsInput: ''
+export const useProfileForm = (initialData: ProfileFormData) => {
+    // Add debug logging for initial state
+    console.debug('Initializing form with data:', initialData);
+
+    // Consolidate all state into a single hook call at the top
+    const [formState, setFormState] = useState<FormState>(() => {
+        const initialState = {
+            formData: {
+                ...initialData,
+                yearsOfExperience: initialData.yearsOfExperience ?? null,
+                specializations: initialData.specializations || [],
+                certifications: {
+                    name: initialData.certifications?.name || []
+                }
+            },
+            inputState: {
+                specializationsInput: '',
+                certificationsInput: ''
+            }
+        };
+        console.debug('Initial form state:', initialState);
+        return initialState;
     });
 
 
+    // Add a setFormData function that works with our state structure
+    const setFormData = useCallback((updater: (prev: ProfileFormData) => ProfileFormData) => {
+        setFormState(prev => ({
+            ...prev,
+            formData: updater(prev.formData)
+        }));
+    }, []);
+
+    // // Separate state for input fields to prevent value conflicts
+    // const [inputState, setInputState] = useState<InputState>({
+    //     specializationsInput: '',
+    //     certificationsInput: ''
+    // });
+
+
     // Type-safe input processor
-    const processInput = useMemo(() => {
-        return (input: string): string[] => {
-            return input
+    const processInput = useCallback((input: string): string[] => {
+        return input
                 .split(',')
-                .map((item: string) => item.trim())
-                .filter((item: string): item is string => 
-                    typeof item === 'string' && item.length > 0
-                );
-        };
+                .map(item => item.trim())
+                .filter(Boolean);
     }, []);
 
-    // Debounced function to handle array updates
-    const updateArrayField = useMemo(() => {
-        const handler = (fieldName: ArrayFieldName, values: string[]) => {
-            setFormData(prev => {
-                if (fieldName === 'specializations') {
-                    // For specializations, update the array directly
-                    const updatedSpecializations = [...new Set([
-                        ...prev.specializations,
-                        ...values
-                    ])];
-                    return {
-                        ...prev,
-                        specializations: updatedSpecializations
-                    };
-                } else {
-                    // For certifications, update the nested name array
-                    const updatedCertifications = {
-                        name: [...new Set([
-                            ...(prev.certifications?.name || []),
-                            ...values
-                        ])]
-                    };
-                    return {
-                        ...prev,
-                        certifications: updatedCertifications
-                    };
-                }
+    // Unified state update function
+    const updateFormState = useCallback((
+        updater: (prev: FormState) => FormState
+    ) => {
+        setFormState(prev => {
+            const newState = updater(prev);
+            console.debug('Form state update:', {
+                previous: prev,
+                new: newState
             });
-
-            // Clear the corresponding input
-            setInputState(prev => ({
-                ...prev,
-                [`${fieldName}Input`]: ''
-            }));
-        };
-
-        // Debounce the handler to prevent rapid updates
-        return debounce(handler, 300);
+            return newState;
+        });
     }, []);
+
+    // // Debounced function to handle array updates
+    // const updateArrayField = useMemo(() => {
+    //     const handler = (fieldName: ArrayFieldName, values: string[]) => {
+    //         setFormData(prev => {
+    //             if (fieldName === 'specializations') {
+    //                 // For specializations, update the array directly
+    //                 const updatedSpecializations = [...new Set([
+    //                     ...prev.specializations,
+    //                     ...values
+    //                 ])];
+    //                 return {
+    //                     ...prev,
+    //                     specializations: updatedSpecializations
+    //                 };
+    //             } else {
+    //                 // For certifications, update the nested name array
+    //                 const updatedCertifications = {
+    //                     name: [...new Set([
+    //                         ...(prev.certifications?.name || []),
+    //                         ...values
+    //                     ])]
+    //                 };
+    //                 return {
+    //                     ...prev,
+    //                     certifications: updatedCertifications
+    //                 };
+    //             }
+    //         });
+
+    //         // Clear the corresponding input
+    //         setInputState(prev => ({
+    //             ...prev,
+    //             [`${fieldName}Input`]: ''
+    //         }));
+    //     };
+
+    //     // Debounce the handler to prevent rapid updates
+    //     return debounce(handler, 300);
+    // }, []);
 
     // Improved change handler with type safety
     const handleChange = useCallback((
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
         const { name, value } = e.target;
+        console.debug('handleChange triggered:', { 
+            name, 
+            value,
+            currentFormState: formState // Log current state
+        });
 
-        // Add some debugging to help track state changes
-        console.debug('Form change:', { name, value });
+        if (name === 'yearsOfExperience') {
+            // Handle empty field properly
+            const numValue = value === '' ? null : Number(value);
+            setFormState(prev => ({
+                ...prev,
+                formData: {
+                    ...prev.formData,
+                    yearsOfExperience: numValue
+                }
+            }));
+            return;
+        }
 
         // Handle specializations and certifications inputs
         if (name === 'specializationsInput' || name === 'certificationsInput') {
-            // Immediately update input state
-            setInputState(prev => ({
-                ...prev,
-                [name]: value
-            }));
+            console.debug('Special field detected:', name);
+           
+            setFormState(prev => {
+                const newState = {
+                    ...prev,
+                    inputState: {
+                        ...prev.inputState,
+                        [name]: value
+                    }
+                };
+                console.debug('New state after update:', newState);
+                return newState;
+            });
 
-            // If the value ends with comma or enter, process it
-        if (value.endsWith(',') || value.endsWith('\n')) {
-            const fieldName = name === 'specializationsInput' 
-                ? 'specializations' 
-                : 'certifications';
-            const processedValue = value.replace(/[,\n]$/, '').trim();
-            
-            if (processedValue) {
-                const newItems = processInput(processedValue);
-                updateArrayField(fieldName, newItems);
+            // If value ends with comma, process it
+            if (value.endsWith(',')) {
+                const processedValue = value.slice(0, -1).trim();
+                if (processedValue) {
+                    updateFormState(prev => {
+                        const newState = { ...prev };
 
-                // Log update for debugging
-                console.log('Array field update:', {
-                    fieldName,
-                    processedValue,
-                    newItems
-                });
+                        if (name === 'specializationsInput') {
+                            newState.formData.specializations = [
+                                ...new Set([...prev.formData.specializations, processedValue])
+                            ];
+                            newState.inputState.specializationsInput = '';
+                        } else {
+                            newState.formData.certifications.name = [
+                                ...new Set([...prev.formData.certifications.name, processedValue])
+                            ];
+                            newState.inputState.certificationsInput = '';
+                        }
+                        return newState;
+                        
+                    });
+                }
             }
+        } else {
+            // Handle regular fields
+            updateFormState(prev => ({
+                ...prev,
+                formData: {
+                    ...prev.formData,
+                    [name]: name === 'yearsOfExperience' 
+                        ? (value === '' ? null : parseInt(value, 10))
+                        : value
+                }
+            }));
         }
-        return;
-    }
+    }, []);
 
-        // Special handling for years of experience
-    if (name === 'yearsOfExperience') {
-        // If the value is empty, set to null
-        if (value === '') {
-            setFormData(prev => ({ ...prev, [name]: 0 }));
-            return;
-        }
-        // Only update if it's a valid number
-        const num = parseInt(value, 10);
-        if (!isNaN(num)) {
-            setFormData(prev => ({ ...prev, [name]: num }));
-        }
-        return;
-    }
-
-    // Handle all other fields normally
-    setFormData(prev => ({ ...prev, [name]: value }));
-}, [processInput, updateArrayField]);
-
-    // Delete handlers with improved type safety
+    // Delete handlers
     const handleDeleteSpecialization = useCallback((specToDelete: string) => {
-        setFormData(prev => ({
+        console.debug('Deleting specialization:', specToDelete);
+        updateFormState(prev => ({
             ...prev,
-            specializations: prev.specializations.filter(spec => spec !== specToDelete)
+            formData: {
+                ...prev.formData,
+                specializations: prev.formData.specializations.filter(
+                    spec => spec !== specToDelete
+                )
+            }
         }));
     }, []);
 
     const handleDeleteCertification = useCallback((certToDelete: string) => {
-        setFormData(prev => ({
+        console.debug('Deleting certification:', certToDelete);
+        updateFormState(prev => ({
             ...prev,
-            certifications: {
-                name: prev.certifications.name.filter(cert => cert !== certToDelete)
+            formData: {
+                ...prev.formData,
+                certifications: {
+                    name: prev.formData.certifications.name.filter(
+                        cert => cert !== certToDelete
+                    )
+                }
             }
         }));
     }, []);
 
-    // Cleanup effect
-    useEffect(() => {
-        return () => {
-            updateArrayField.cancel();
+    // Get processed data for submission
+    const getProcessedData = useCallback(() => {
+        // Create a new object rather than mutating
+        const processed: Partial<ProfileFormData> = {
+            ...formState.formData,
+            // Ensure yearsOfExperience is properly typed
+            yearsOfExperience: formState.formData.yearsOfExperience ?? null,
+            specializations: [...formState.formData.specializations],
+            certifications: {
+                name: [...formState.formData.certifications.name]
+            }
         };
-    }, [updateArrayField]);
+        
+        // Process any remaining input values
+        if (formState.inputState.specializationsInput.trim()) {
+            const newSpecs = processInput(formState.inputState.specializationsInput);
+            processed.specializations = [...new Set([
+                ...(processed.specializations || []),
+                ...newSpecs
+            ])];
+        }
+        
+        if (formState.inputState.certificationsInput.trim()) {
+            const newCerts = processInput(formState.inputState.certificationsInput);
+            processed.certifications = {
+                name: [...new Set([
+                    ...(processed.certifications?.name || []),
+                    ...newCerts
+                ])]
+            };
+        }
+
+        // Create type-safe copy without input fields
+        const { specializationsInput, certificationsInput, ...finalData } = processed;
+        
+        return finalData as ProfileFormData;
+    }, [formState, processInput]);
 
     return {
-        formData,
+        formData: formState.formData,
+        inputState: formState.inputState,
         setFormData,
-        inputState,
         handleChange,
         handleDeleteSpecialization,
-        handleDeleteCertification
-    };
+        handleDeleteCertification,
+        getProcessedData
+    }
 };

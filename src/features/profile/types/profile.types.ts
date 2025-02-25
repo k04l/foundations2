@@ -32,12 +32,8 @@ export interface Profile {
 }
 
 export interface ProfileInputState {
-  specializationsInput: string;
-  certificationsInput: string;
-}
-
-export interface Certification {
-name: string[];
+  specializationsInput?: string;
+  certificationsInput?: string;
 }
 
 export interface ProfilePictureData {
@@ -55,7 +51,9 @@ professionalTitle: string;
 company: string;
 yearsOfExperience: number | null;
 specializations: string[];
-certifications: Certification;
+certifications: {
+  name: string[];
+  };
 bio: string;
 contactEmail?: string;
 phoneNumber?: string;

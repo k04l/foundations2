@@ -84,11 +84,16 @@ const ProfileEdit: React.FC = () => {
         linkedin: '',
         twitter: ''
     };
-    
-    // Use it in your hook
-    const formHandling = useProfileForm(initialFormData);
 
-    const { formData, inputState, handleChange, handleDeleteSpecialization, handleDeleteCertification } = formHandling;
+    const { 
+        formData, 
+        setFormData,
+        inputState, 
+        handleChange, 
+        handleDeleteSpecialization, 
+        handleDeleteCertification,
+        getProcessedData 
+    } = useProfileForm(initialFormData);
 
     // UI state management
     const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
@@ -117,16 +122,16 @@ const ProfileEdit: React.FC = () => {
                 const result = await fetchProfile(user.id);
                 if (!mounted || !result?.success || !result?.data) return;
 
-                    formHandling.setFormData(prev => ({
+                    setFormData(prev => ({
                         ...prev,
                         ...result.data,
                         specializations: Array.isArray(result.data.specializations)
-                            ? result.data.specializations
-                            : [],
+                        ? result.data.specializations
+                        : [],
                         certifications: {
-                            name: Array.isArray(result.data.certifications?.name)
-                                ? result.data.certifications.name
-                                : []
+                        name: Array.isArray(result.data.certifications?.name)
+                            ? result.data.certifications.name
+                            : []
                         }
                     }));
 
@@ -144,7 +149,7 @@ const ProfileEdit: React.FC = () => {
         return () => {
             mounted = false;
         };
-    }, [user?.id, fetchProfile, formHandling.setFormData, imageHandling.setImagePreview]);
+    }, [user?.id, fetchProfile, setFormData, imageHandling.setImagePreview]);
 
     // Add cleanup on component unmount
     useEffect(() => {
@@ -313,7 +318,7 @@ const ProfileEdit: React.FC = () => {
         const formDataToSubmit = new FormData();
 
         // First, add all the regular form fields
-        Object.entries(formHandling.formData).forEach(([key, value]) => {
+        Object.entries(formData).forEach(([key, value]) => {
             // Skip the image file as we'll handle it separately
             if (key === 'profilePicture') return;
             
@@ -465,7 +470,7 @@ const ProfileEdit: React.FC = () => {
                             getInputProps={getInputProps}
                             isDragActive={isDragActive}
                             handleCropComplete={handleCropComplete}
-                            formData={formHandling.formData}
+                            formData={formData}
                             setImageFile={imageHandling.setImageFile}
                             setImagePreview={imageHandling.setImagePreview}
                             setCroppedPreview={imageHandling.setCroppedPreview}   
@@ -473,23 +478,23 @@ const ProfileEdit: React.FC = () => {
                         
                         {/* Form Sections */}
                         <PersonalInfo 
-                            formData={formHandling.formData} 
-                            handleChange={formHandling.handleChange} 
+                            formData={formData} 
+                            handleChange={handleChange} 
                         />
                         <ProfessionalInfo 
-                            formData={formHandling.formData}
+                            formData={formData}
                             inputState={inputState}
-                            handleChange={formHandling.handleChange}
-                            handleDeleteSpecialization={formHandling.handleDeleteSpecialization}
-                            handleDeleteCertification={formHandling.handleDeleteCertification}
+                            handleChange={handleChange}
+                            handleDeleteSpecialization={handleDeleteSpecialization}
+                            handleDeleteCertification={handleDeleteCertification}
                         />
                         <AboutSection 
-                            formData={formHandling.formData}
-                            handleChange={formHandling.handleChange}
+                            formData={formData}
+                            handleChange={handleChange}
                         />
                         <ContactInfo 
-                            formData={formHandling.formData}
-                            handleChange={formHandling.handleChange}
+                            formData={formData}
+                            handleChange={handleChange}
                         />
 
                         {/* Submit Button */}
