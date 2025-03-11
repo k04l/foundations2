@@ -1,20 +1,22 @@
 // src/features/home/components/AppIcon.jsx
 import React from 'react';
 
-export const AppIcon = ({ icon: Icon, label, badge, onClick }) => (
-  <div 
-    onClick={onClick}
-    className="flex flex-col items-center justify-center p-6 bg-gray-900/70 rounded-xl border border-blue-500/20 hover:border-blue-400/40 shadow-lg hover:shadow-blue-500/10 transition-all duration-200 cursor-pointer backdrop-blur-md group"
-  >
-    <div className="relative">
-      <Icon size={32} className="text-blue-400 mb-3 group-hover:text-blue-300 transition-colors" />
+export const AppIcon = ({ icon: Icon, label, badge, onClick, className }) => (
+  <div className={`group relative ${className}`} onClick={onClick}>
+    <div className="bg-gray-800 p-4 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors">
+      <Icon className="w-8 h-8 mx-auto mb-2 text-blue-400" />
+      <span className="text-sm text-blue-100 block text-center">{label}</span>
       {badge && (
-        <span className="absolute -top-2 -right-2 bg-blue-500 text-blue-100 text-xs rounded-full w-5 h-5 flex items-center justify-center">
+        <span className="absolute top-0 right-0 bg-blue-500 text-xs px-2 py-1 rounded-full text-blue-100">
           {badge}
         </span>
       )}
     </div>
-    <span className="text-sm font-medium text-blue-100">{label}</span>
+    {label === 'Design Engineer Tools' && (
+      <div className="absolute z-10 invisible group-hover:visible bg-gray-800 text-blue-300 text-sm p-2 rounded-md -mt-2 left-1/2 transform -translate-x-1/2 translate-y-full">
+        Compare equipment options for MEP designs
+      </div>
+    )}
   </div>
 );
 

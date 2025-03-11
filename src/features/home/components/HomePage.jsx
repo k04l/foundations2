@@ -11,7 +11,8 @@ import {
   Briefcase, 
   Lightbulb, 
   MessageCircle, 
-  BarChart 
+  BarChart,
+  Calculator
 } from 'lucide-react';
 import { BackgroundPattern } from './BackgroundPattern';
 import { AppIcon } from './AppIcon';
@@ -84,6 +85,23 @@ export const HomePage = () => {
             Connect, learn, and grow with the first digital-first community for Mechanical, Electrical, and Plumbing engineers
           </p>
         </div>
+
+        {/* Featured Tool Section */}
+        <section className="mb-12 bg-gradient-to-r from-blue-600/20 to-blue-400/10 backdrop-blur-sm rounded-xl p-12 text-center border border-blue-500/20 hover:border-blue-400/40 transition-colors">
+          <h3 className="text-3xl font-semibold text-blue-100 mb-6">
+              <Calculator className="mr-2" /> Featured Tool: Equipment Comparison
+          </h3>
+          <p className="text-blue-300 mb-6">
+            Compare AHUs, Chillers, Cooling Towers, Custom Equipment, and more with our Equipment Comparison tool
+          </p>
+          <button
+            onClick={() => handleNavigation('/design-engineer')}
+            className="inline-flex items-center px-8 py-4 bg-blue-600 text-blue-100 rounded-lg hover:bg-blue-500 transition-all duration-200 text-lg font-medium group transform hover:scale-105"
+          >
+            Try Now
+            <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={20} />
+          </button>
+        </section>
 
         <div className="mb-12">
           <h2 className="text-lg font-semibold text-blue-100 mb-6 flex items-center">

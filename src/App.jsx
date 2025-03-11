@@ -21,6 +21,7 @@ import { useNavigation } from './features/auth/hooks/useNavigation';
 import { Loader } from './components/ui/loader';
 import ErrorBoundary from './features/auth/components/ErrorBoundary';
 import PropTypes from 'prop-types';
+import { DesignEngineerLanding } from './features/home/components/DesignEngineerLanding';
 
 // Separate Header component with dropdown functionality
 const Header = () => {
@@ -198,6 +199,8 @@ const Routes = ({ currentPath, isAuthenticated, user, navigate }) => {
   switch (currentPath) {
     case '/':
       return <HomePage />;
+    case '/design-engineers':
+      return <DesignEngineerLanding />;
     case '/register':
       return !isAuthenticated ? <Register /> : null;
     case '/login':
@@ -376,15 +379,16 @@ const App = () => {
   );
 };
 
-export default App;
-
 Routes.propTypes = {
   currentPath: PropTypes.string.isRequired,
   isAuthenticated: PropTypes.bool.isRequired,
-  user: PropTypes.object
+  user: PropTypes.object,
+  navigate: PropTypes.func 
 };
 
 // Ensure the navigate function is available in the Routes component
 Routes.contextTypes = {
   navigate: PropTypes.func
 };
+
+export default App;
