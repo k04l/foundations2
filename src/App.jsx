@@ -14,6 +14,7 @@ import { AuthProvider } from './features/auth/providers/AuthProvider';
 import { useAuth } from './features/auth/hooks/useAuth';
 import { Dashboard } from './features/dashboard/components/Dashboard';
 import { HomePage } from './features/home/components/HomePage';
+import { DesignEngineerLanding } from './features/home/components/DesignEngineerLanding';
 import { Home, Settings, User, LogOut } from 'lucide-react';
 import ProfileView from './features/profile/components/ProfileView';
 import ProfileEdit from './features/profile/components/ProfileEdit';
@@ -21,7 +22,7 @@ import { useNavigation } from './features/auth/hooks/useNavigation';
 import { Loader } from './components/ui/loader';
 import ErrorBoundary from './features/auth/components/ErrorBoundary';
 import PropTypes from 'prop-types';
-import { DesignEngineerLanding } from './features/home/components/DesignEngineerLanding';
+
 
 // Separate Header component with dropdown functionality
 const Header = () => {
@@ -199,7 +200,7 @@ const Routes = ({ currentPath, isAuthenticated, user, navigate }) => {
   switch (currentPath) {
     case '/':
       return <HomePage />;
-    case '/design-engineers':
+    case '/design-engineer':
       return <DesignEngineerLanding />;
     case '/register':
       return !isAuthenticated ? <Register /> : null;
