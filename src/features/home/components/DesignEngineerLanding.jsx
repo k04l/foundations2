@@ -27,12 +27,22 @@ export const DesignEngineerLanding = () => {
   const [newFluidFlowType, setNewFluidFlowType] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProjectDetailsExpanded, setIsProjectDetailsExpanded] = useState(true);
+  // New states for attachments, feedback, and invites
+  const [showAttachmentModal, setShowAttachmentModal] = useState(false);
+  const [selectedOptionIdForAttachment, setSelectedOptionIdForAttachment] = useState(null);
+  const [attachmentType, setAttachmentType] = useState('');
+  const [attachmentFile, setAttachmentFile] = useState(null);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
 
   // **Derived State**
   const selectedProject = projects.find(p => p.id === selectedProjectId);
 
   // **Constants**
   const equipmentTypes = ['AHU', 'Chiller', 'Cooling Tower', 'Fluid Cooler', 'Custom Skid'];
+  const attachmentTypes = ['Selection', 'Submittal', 'IOM', 'CAD', 'REVIT'];
 
   const commonFields = {
     AHU: [
@@ -213,6 +223,43 @@ export const DesignEngineerLanding = () => {
     { name: 'costPerMbtuGas', label: '$/MBTU Gas' },
   ];
 
+  // **Backend Persistence**
+    useEffect(() => {
+        // Fetch projects on mount
+        const fetchProjects = async () => {
+            try {
+                const response = await fetch('http://localhost:5173/api/projects', {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                });
+                const data = await response.json();
+                setProjects(data.projects || []);
+            } catch (error) {
+                console.error('Failed to fetch projects:', error);
+            }
+        };
+        if (isAuthenticated) fetchProjects();
+    }, [isAuthenticated]);
+
+    const saveProject = async () => {
+        if (!selectedProject) return;
+        try {
+            await fetch('/api/projects', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+                body: JSON.stringify(selectedProject),
+            });
+        }catch (error) {
+            console.error('Failed to save project:', error);
+        }
+    };
+
+    useEffect(() => {
+        if (selectedProject) saveProject();
+    }, [selectedProject]);
+
   // **Functions**
 
   const addProject = () => {
@@ -280,6 +327,7 @@ export const DesignEngineerLanding = () => {
         equipmentTag: finalTag,
         commonFields: Object.fromEntries(commonFields[type].map(field => [field.name, ''])),
         fluidFlows,
+        attachments: [],
       };
       const newGroup = {
         id: Date.now(),
@@ -399,6 +447,69 @@ export const DesignEngineerLanding = () => {
         } : opt),
       })),
     } : p));
+  };
+
+  const addAttachment= (optionId) => {
+    if (!attachmentType || !attachmentFile) {
+      alert('Please select a type and file');
+        return;
+    }
+    const fileName = attachmentFile.name;
+    setProjects(projects.map(p => p.id === selectedProjectId ? {
+        ...p,
+        equipmentGroups: p.equipmentGroups.map(group => ({
+            ...group,
+            options: group.options.map(opt => opt.id === optionId ? {
+                ...opt,
+                attachments: [
+                    ...opt.attachments,
+                    {
+                        id: Date.now() + Math.random(),
+                        type: attachmentType,
+                        fileName,
+                    },
+                ],
+            } : opt),
+        })),
+    } : p));
+    setShowAttachmentModal(false);
+    setAttachmentType('');
+    setAttachmentFile(null);
+  };
+
+  const removeAttachment = (optionId, attachmentIndex) => {
+    setProjects(projects.map(p => p.id === selectedProjectId ? {
+      ...p,
+      equipmentGroups: p.equipmentGroups.map(group => ({
+        ...group,
+        options: group.options.map(opt => opt.id === optionId ? {
+          ...opt,
+          attachments: opt.attachments.filter((_, i) => i !== attachmentIndex),
+        } : opt),
+      })),
+    } : p));
+  };
+
+  const submitFeedback = () => {
+    const feedbackData = {
+      text: feedbackText,
+      context: selectedProject ? { projectId: selectedProject.id, projectName: selectedProject.name } : null,
+    };
+    // Simulate sending feedback to backend
+    console.log('Feedback submitted:', feedbackData);
+    setFeedbackText('');
+    setShowFeedbackModal(false);
+  };
+
+  const sendInvite = () => {
+    if (!inviteEmail.trim()) {
+      alert('Please enter an email or username.');
+      return;
+    }
+    // Simulate sending invite to backend
+    console.log('Inviting:', inviteEmail, 'to project:', selectedProjectId);
+    setInviteEmail('');
+    setShowInviteModal(false);
   };
 
   const generateSchedule = (option) => {
@@ -579,6 +690,100 @@ ${fluidFlowsText || 'None'}
     </div>
   );
 
+  const renderAttachmentModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+      <div className="bg-gray-800 p-6 rounded-lg border border-blue-500/20 w-full max-w-sm">
+        <h3 className="text-lg font-semibold text-blue-100 mb-4">Add Attachment</h3>
+        <select
+          value={attachmentType}
+          onChange={e => setAttachmentType(e.target.value)}
+          className="w-full px-3 py-2 bg-gray-700 border border-blue-500/20 rounded-md text-blue-100 mb-4 text-sm"
+        >
+          <option value="">Select Attachment Type</option>
+          {attachmentTypes.map(type => (
+            <option key={type} value={type}>{type}</option>
+          ))}
+        </select>
+        <input
+          type="file"
+          onChange={e => setAttachmentFile(e.target.files[0])}
+          className="w-full text-blue-100 mb-4 text-sm"
+        />
+        <div className="flex justify-end space-x-2">
+          <button
+            onClick={() => setShowAttachmentModal(false)}
+            className="px-4 py-2 bg-gray-600 text-blue-100 rounded-lg hover:bg-gray-500 text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => addAttachment(selectedOptionIdForAttachment)}
+            className="px-4 py-2 bg-blue-600 text-blue-100 rounded-lg hover:bg-blue-500 text-sm"
+          >
+            Add
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderFeedbackModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-gray-800 p-6 rounded-lg border border-blue-500/20 w-full max-w-md">
+        <h3 className="text-lg font-semibold text-blue-100 mb-4">Submit Feedback</h3>
+        <textarea
+          value={feedbackText}
+          onChange={e => setFeedbackText(e.target.value)}
+          className="w-full h-32 p-2 bg-gray-700 border border-blue-500/20 rounded-md text-blue-100 text-sm"
+          placeholder="Your feedback..."
+        ></textarea>
+        <div className="flex justify-end space-x-2 mt-4">
+          <button
+            onClick={() => setShowFeedbackModal(false)}
+            className="px-4 py-2 bg-gray-600 text-blue-100 rounded-lg hover:bg-gray-500 text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={submitFeedback}
+            className="px-4 py-2 bg-blue-600 text-blue-100 rounded-lg hover:bg-blue-500 text-sm"
+          >
+            Submit
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderInviteModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-gray-800 p-6 rounded-lg border border-blue-500/20 w-full max-w-sm">
+        <h3 className="text-lg font-semibold text-blue-100 mb-4">Invite Collaborator</h3>
+        <input
+          type="text"
+          value={inviteEmail}
+          onChange={e => setInviteEmail(e.target.value)}
+          placeholder="Enter email or username"
+          className="w-full px-3 py-2 bg-gray-700 border border-blue-500/20 rounded-md text-blue-100 mb-4 text-sm"
+        />
+        <div className="flex justify-end space-x-2">
+          <button
+            onClick={() => setShowInviteModal(false)}
+            className="px-4 py-2 bg-gray-600 text-blue-100 rounded-lg hover:bg-gray-500 text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={sendInvite}
+            className="px-4 py-2 bg-blue-600 text-blue-100 rounded-lg hover:bg-blue-500 text-sm"
+          >
+            Invite
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderAddFluidFlowModal = () => {
     const option = selectedProject?.equipmentGroups
       .flatMap(g => g.options)
@@ -636,6 +841,7 @@ ${fluidFlowsText || 'None'}
             {group.options.map((option, index) => (
               <div key={option.id} className="mb-6 p-4 bg-gray-700/50 rounded-lg relative">
                 <h5 className="text-lg font-medium text-blue-200 mb-2">{option.equipmentTag}</h5>
+                {/* Delete Button */}
                 {index === 0 ? (
                   <button
                     onClick={() => deleteEquipmentGroup(group.id)}
@@ -703,7 +909,34 @@ ${fluidFlowsText || 'None'}
                     </button>
                   </div>
                 ))}
-                <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-3">
+                {/* Attachments Section */}
+                <div className="mt-4">
+                  <h6 className="text-sm font-medium text-blue-200 mb-2">Attachments</h6>
+                  <div className="space-y-2">
+                    {(option.attachments || []).map((attachment, idx) => (
+                      <div key={idx} className="flex items-center justify-between">
+                        <span className="text-sm text-blue-300">{attachment.type}: {attachment.fileName}</span>
+                        <button
+                          onClick={() => removeAttachment(option.id, idx)}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSelectedOptionIdForAttachment(option.id);
+                      setShowAttachmentModal(true);
+                    }}
+                    className="mt-2 text-blue-400 hover:text-blue-300 text-sm flex items-center"
+                  >
+                    <Plus size={14} className="mr-1" /> Add Attachment
+                  </button>
+                </div>
+                {/* Action Buttons */}
+                <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-3 mt-3">
                   <button
                     onClick={() => {
                       setSelectedOptionIdForFluidFlow(option.id);
@@ -737,6 +970,18 @@ ${fluidFlowsText || 'None'}
       {showAddProjectModal && renderAddProjectModal()}
       {showEquipmentModal && renderAddEquipmentModal()}
       {showAddFluidFlowModal && renderAddFluidFlowModal()}
+      {showAttachmentModal && renderAttachmentModal()}
+      {showFeedbackModal && renderFeedbackModal()}
+      {showInviteModal && renderInviteModal()}
+
+      {/* Global Feedback Button */}
+        <button
+            onClick={() => setShowFeedbackModal(true)}
+            className="fixed bottom-4 right-4 p-3 bg-blue-600 text-blue-100 rounded-full hover:bg-blue-500 z-50"
+        >
+            Feedback
+        </button>
+
 
       {/* Mobile Header */}
       <header className="md:hidden fixed top-0 left-0 right-0 bg-gray-800 p-4 flex items-center justify-between z-40">
@@ -878,16 +1123,24 @@ ${fluidFlowsText || 'None'}
                 </button>
               </div>
               {isProjectDetailsExpanded && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {projectFields.map(field => (
-                    <EditableField
-                      key={field.name}
-                      label={field.label}
-                      value={selectedProject[field.name]}
-                      onSave={newValue => handleProjectFieldSave(field.name, newValue)}
-                    />
-                  ))}
-                </div>
+                <div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {projectFields.map(field => (
+                        <EditableField
+                        key={field.name}
+                        label={field.label}
+                        value={selectedProject[field.name]}
+                        onSave={newValue => handleProjectFieldSave(field.name, newValue)}
+                        />
+                    ))}
+                    </div>
+                    <button
+                        onClick={() => setShowInviteModal(true)}
+                        className="mt-4 text-blue-400 hover:text-blue-300 text-sm flex items-center"
+                    >
+                        <Plus size={14} className="mr-1" /> Invite Collaborator
+                </button>
+              </div>
               )}
             </section>
             <section className="bg-gray-800/50 backdrop-blur-md rounded-xl p-5 border border-blue-500/20">

@@ -3,6 +3,7 @@
 import express, { query } from 'express';
 import authRoutes from './auth.routes.js';
 import profileRoutes from './profile.routes.js';
+import projectsRoutes from './projects.routes.js';
 // import debugRoutes from './debug.routes.js';
 
 // Import controllers (you'll need to create these)
@@ -32,6 +33,8 @@ router.use((req, res, next) => {
 
 router.use('/auth', authRoutes);
 router.use('/profiles', profileRoutes);
+router.use('/projects', projectsRoutes);
+
 // router.use('/debug', debugRoutes);
 
 // Health check route
