@@ -1,6 +1,6 @@
 // src/features/auth/components/EmailVerification.jsx
 import { useState, useEffect } from 'react';
-import { Alert, AlertDescription, AlertTitle } from './alert';
+import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
 // import { Mail, AlertCircle, Check } from 'lucide-react';
 import { useNavigation } from '../hooks/useNavigation';
 

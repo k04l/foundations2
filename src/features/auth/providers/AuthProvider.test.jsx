@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AuthProvider } from './AuthProvider';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../context/AuthContext.tsx';
 
 // Helper to consume context
 const Consumer = () => (

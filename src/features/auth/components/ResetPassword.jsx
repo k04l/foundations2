@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigation } from '../hooks/useNavigation';
-import { Alert, AlertDescription } from './alert';
+import { Alert, AlertDescription } from '../../components/ui/alert';
 import { ArrowLeft, Shield, Check } from 'lucide-react';
 
 

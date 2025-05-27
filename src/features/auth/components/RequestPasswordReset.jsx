@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigation } from '../hooks/useNavigation';
-import { Alert, AlertDescription } from './alert';
+import { Alert, AlertDescription } from '../../components/ui/alert';
 import { ArrowLeft } from 'lucide-react';
 
 // Component for requesting password reset

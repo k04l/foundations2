@@ -1,8 +1,7 @@
-// src/features/auth/components/Login.jsx
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigation } from '../hooks/useNavigation';
-import { Alert, AlertDescription } from './alert';
+import { Alert, AlertDescription } from '../../../components/ui/alert';
 
 export const Login = () => {
   // State management for form fields and UI status
@@ -10,15 +9,15 @@ export const Login = () => {
     email: '',
     password: '',
   });
-  const [status, setStatus] = useState('idle');
-  const [error, setError] = useState('');
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [error, setError] = useState<string>('');
 
   // Get authentication and navigation hooks
   const { login } = useAuth();
   const { navigate } = useNavigation();
 
   // Handle input changes
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -29,7 +28,7 @@ export const Login = () => {
   };
 
   // Handle form submission
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setStatus('submitting');
     setError('');
@@ -55,7 +54,7 @@ export const Login = () => {
         setStatus('error');
         setError(result.error || 'Invalid credentials');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Login error:', err);
       setStatus('error');
       setError(err.message || 'An unexpected error occurred');

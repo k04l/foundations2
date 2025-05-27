@@ -3,7 +3,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { useNavigation } from '../hooks/useNavigation';
 import PropTypes from 'prop-types';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../context/AuthContext.tsx';
 
 export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);

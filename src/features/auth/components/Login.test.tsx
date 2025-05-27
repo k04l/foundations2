@@ -42,10 +42,10 @@ describe('Login', () => {
   });
 
   it('navigates on successful login', async () => {
-    const { getByLabelText, getByRole } = render(<Login />);
-    fireEvent.change(getByLabelText(/email/i), { target: { value: 'user@example.com' } });
-    fireEvent.change(getByLabelText(/password/i), { target: { value: 'password' } });
-    fireEvent.click(getByRole('button', { name: /sign in/i }));
+    render(<Login />);
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'user@example.com' } });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'password' } });
+    fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
     await waitFor(() => {
       expect(screen.queryByText(/invalid credentials/i)).not.toBeInTheDocument();
     });

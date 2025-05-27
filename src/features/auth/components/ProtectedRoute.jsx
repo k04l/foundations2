@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useAuth } from '..//hooks/useAuth';
 import { useNavigation } from '../hooks/useNavigation';
-import { Loader } from '../../../components/ui/loader';
+import { Loader } from '../../../components/ui/loader.tsx';
 // import { useLocation } from 'react-router-dom';
 
 export const ProtectedRoute = ({ children }) => {

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useNavigation } from '../../auth/hooks/useNavigation';
-import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card.tsx';
 import { 
   // Changed 'Tool' to 'Wrench' which is the correct icon name
   BarChart2 as BarChart, 

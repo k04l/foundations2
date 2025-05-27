@@ -1,7 +1,6 @@
 // src/features/auth/components/ResendVerification.jsx
 import { useState } from 'react';
-import { Alert, AlertDescription, AlertTitle } from './alert';
-// import { Mail, AlertCircle, Check } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
 
 const MailIcon = () => (
   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
