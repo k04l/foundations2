@@ -1,7 +1,5 @@
-// src/features/auth/components/EmailVerification.jsx
 import { useState, useEffect } from 'react';
-import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
-// import { Mail, AlertCircle, Check } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '../../../components/ui/alert';
 import { useNavigation } from '../hooks/useNavigation';
 
 const MailIcon = () => (
@@ -26,10 +24,10 @@ const AlertIcon = () => (
 );
 
 export const EmailVerification = () => {
-  const [status, setStatus] = useState('verifying');
+  const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
   const [error, setError] = useState('');
   const { navigate } = useNavigation();
-  
+
   useEffect(() => {
     const verifyEmail = async () => {
       try {
@@ -39,15 +37,11 @@ export const EmailVerification = () => {
           setError('No verification token found');
           return;
         }
-
         const response = await fetch(`/api/v1/auth/verify-email/${token}`, {
           method: 'GET',
           credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json'
-          }
+          headers: { 'Content-Type': 'application/json' }
         });
-
         if (response.ok) {
           setStatus('success');
           setTimeout(() => navigate('/login'), 3000);
@@ -61,7 +55,6 @@ export const EmailVerification = () => {
         setError('Unable to verify email. Please try again later.');
       }
     };
-
     verifyEmail();
   }, [navigate]);
 
@@ -76,7 +69,6 @@ export const EmailVerification = () => {
           </AlertDescription>
         </Alert>
       )}
-
       {status === 'success' && (
         <Alert className="bg-green-50 border-green-200">
           <CheckIcon />
@@ -86,7 +78,6 @@ export const EmailVerification = () => {
           </AlertDescription>
         </Alert>
       )}
-
       {status === 'error' && (
         <Alert className="bg-red-50 border-red-200">
           <AlertIcon />
@@ -98,4 +89,4 @@ export const EmailVerification = () => {
       )}
     </div>
   );
-};
+}

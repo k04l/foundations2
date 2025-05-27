@@ -1,66 +1,50 @@
-// src/features/auth/components/ResetPassword.jsx
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigation } from '../hooks/useNavigation';
-import { Alert, AlertDescription } from '../../components/ui/alert';
-import { ArrowLeft, Shield, Check } from 'lucide-react';
-
+import { Alert, AlertDescription } from '../../../components/ui/alert';
+import { ArrowLeft } from 'lucide-react';
 
 export const ResetPassword = () => {
-  const [formData, setFormData] = useState({
-    password: '',
-    confirmPassword: ''
-  });
-  const [status, setStatus] = useState('idle');
+  const [formData, setFormData] = useState({ password: '', confirmPassword: '' });
+  const [status, setStatus] = useState<'idle' | 'submitting'>('idle');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const { navigate } = useNavigation();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
     }
-
     setStatus('submitting');
     setError('');
-
-    // Get token from URL
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
-
     if (!token) {
       setError('Invalid reset link. Please request a new password reset.');
       setStatus('idle');
       return;
     }
-
     try {
       const response = await fetch(`/api/v1/auth/reset-password/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: formData.password })
       });
-
       const data = await response.json();
-
       if (response.ok && data.success) {
         setSuccess(true);
-        // Clear form data for security
         setFormData({ password: '', confirmPassword: '' });
       } else {
         setError(data.message || 'Failed to reset password. Please try again.');
       }
     } catch (err) {
-      console.error('Reset password error:', err);
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setStatus('idle');
     }
   };
 
-  // Success view
   if (success) {
     return (
       <div className="max-w-md mx-auto p-6 bg-gray-900/70 rounded-xl border border-blue-500/20 backdrop-blur-md">
@@ -81,20 +65,17 @@ export const ResetPassword = () => {
     );
   }
 
-  // Form view
   return (
     <div className="max-w-md mx-auto p-6 bg-gray-900/70 rounded-xl border border-blue-500/20 backdrop-blur-md">
       <h2 className="text-2xl font-bold text-blue-100 mb-4">Set New Password</h2>
       <p className="text-blue-300 mb-6">
         Please enter your new password below.
       </p>
-
       {error && (
-        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-          <p className="text-red-400">{error}</p>
-        </div>
+        <Alert variant="destructive" className="mb-6">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
-
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-blue-100 mb-2">
@@ -103,27 +84,23 @@ export const ResetPassword = () => {
           <input
             type="password"
             value={formData.password}
-            onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+            onChange={e => setFormData(f => ({ ...f, password: e.target.value }))}
             className="w-full px-3 py-2 bg-gray-800 border border-blue-500/20 rounded-lg text-blue-100 placeholder-blue-400/50 focus:outline-none focus:border-blue-400"
             required
-            minLength={6}
           />
         </div>
-
         <div>
           <label className="block text-sm font-medium text-blue-100 mb-2">
-            Confirm New Password
+            Confirm Password
           </label>
           <input
             type="password"
             value={formData.confirmPassword}
-            onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+            onChange={e => setFormData(f => ({ ...f, confirmPassword: e.target.value }))}
             className="w-full px-3 py-2 bg-gray-800 border border-blue-500/20 rounded-lg text-blue-100 placeholder-blue-400/50 focus:outline-none focus:border-blue-400"
             required
-            minLength={6}
           />
         </div>
-
         <button
           type="submit"
           disabled={status === 'submitting'}
@@ -134,4 +111,4 @@ export const ResetPassword = () => {
       </form>
     </div>
   );
-};
+}

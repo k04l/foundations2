@@ -22,7 +22,6 @@ import { useNavigation } from './features/auth/hooks/useNavigation';
 import { Loader } from './components/ui/loader';
 import ErrorBoundary from './features/auth/components/ErrorBoundary';
 import PropTypes from 'prop-types';
-import { Routes, Route } from 'react-router-dom';
 
 
 // Separate Header component with dropdown functionality
@@ -169,7 +168,7 @@ const Header = () => {
 
 // Main content area for the app
 
-const Routes = ({ currentPath, isAuthenticated, user, navigate }) => {
+const AppRoutes = ({ currentPath, isAuthenticated, user, navigate }) => {
   // Handle profile routes first
   if (currentPath.startsWith('/profile/')) {
     // Edit route takes precedence
@@ -361,7 +360,7 @@ const AppContent = () => {
     <div className="min-h-screen bg-gray-900 text-blue-100">
       <Header />
       <main className="container mx-auto px-4 py-8">
-        <Routes currentPath={currentPath} isAuthenticated={isAuthenticated} user={user} navigate={navigate}/>
+        <AppRoutes currentPath={currentPath} isAuthenticated={isAuthenticated} user={user} navigate={navigate}/>
       </main>
       <Footer />
     </div>
@@ -381,15 +380,15 @@ const App = () => {
   );
 };
 
-Routes.propTypes = {
+AppRoutes.propTypes = {
   currentPath: PropTypes.string.isRequired,
   isAuthenticated: PropTypes.bool.isRequired,
   user: PropTypes.object,
   navigate: PropTypes.func 
 };
 
-// Ensure the navigate function is available in the Routes component
-Routes.contextTypes = {
+// Ensure the navigate function is available in the AppRoutes component
+AppRoutes.contextTypes = {
   navigate: PropTypes.func
 };
 

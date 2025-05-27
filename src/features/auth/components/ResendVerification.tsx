@@ -1,6 +1,5 @@
-// src/features/auth/components/ResendVerification.jsx
 import { useState } from 'react';
-import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '../../../components/ui/alert';
 
 const MailIcon = () => (
   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -24,26 +23,21 @@ const AlertIcon = () => (
 );
 
 export const ResendVerification = () => {
-  const [status, setStatus] = useState('idle');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [error, setError] = useState('');
   const [cooldown, setCooldown] = useState(0);
 
   const handleResend = async () => {
     if (cooldown > 0) return;
-
     try {
       setStatus('sending');
       const response = await fetch('/api/v1/auth/resend-verification', {
         method: 'POST',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers: { 'Content-Type': 'application/json' }
       });
-
       if (response.ok) {
         setStatus('sent');
-        // Start cooldown timer (60 seconds)
         setCooldown(60);
         const timer = setInterval(() => {
           setCooldown(prev => {
@@ -84,7 +78,6 @@ export const ResendVerification = () => {
           </button>
         </div>
       )}
-
       {status === 'sending' && (
         <Alert className="bg-blue-50 border-blue-200">
           <MailIcon />
@@ -94,18 +87,15 @@ export const ResendVerification = () => {
           </AlertDescription>
         </Alert>
       )}
-
       {status === 'sent' && (
         <Alert className="bg-green-50 border-green-200">
           <CheckIcon />
           <AlertTitle className="text-green-700">Email Sent!</AlertTitle>
           <AlertDescription className="text-green-600">
-            Please check your email for the verification link.
-            {cooldown > 0 && ` You can request another email in ${cooldown} seconds.`}
+            Verification email sent successfully. Please check your inbox.
           </AlertDescription>
         </Alert>
       )}
-
       {status === 'error' && (
         <Alert className="bg-red-50 border-red-200">
           <AlertIcon />
@@ -117,4 +107,4 @@ export const ResendVerification = () => {
       )}
     </div>
   );
-};
+}
