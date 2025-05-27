@@ -22,6 +22,7 @@ import { useNavigation } from './features/auth/hooks/useNavigation';
 import { Loader } from './components/ui/loader';
 import ErrorBoundary from './features/auth/components/ErrorBoundary';
 import PropTypes from 'prop-types';
+import { Routes, Route } from 'react-router-dom';
 
 
 // Separate Header component with dropdown functionality

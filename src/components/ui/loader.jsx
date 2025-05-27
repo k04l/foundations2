@@ -11,7 +11,7 @@ export const Loader = ({ size = 'medium', className = '', center = false }) => {
   const containerClasses = center ? 'flex justify-center items-center min-h-[400px]' : '';
 
   return (
-    <div className={containerClasses}>
+    <div className={containerClasses} role="status" aria-live="polite">
       <div className={`relative ${className}`}>
         <div
           className={`

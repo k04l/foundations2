@@ -228,8 +228,9 @@ export const DesignEngineerLanding = () => {
         // Fetch projects on mount
         const fetchProjects = async () => {
             try {
-                const response = await fetch('http://localhost:5173/api/projects', {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/projects', {
+                    headers: { Authorization: `Bearer ${token}` },
                 });
                 const data = await response.json();
                 setProjects(data.projects || []);

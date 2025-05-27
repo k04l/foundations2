@@ -10,6 +10,12 @@ export default defineConfig({
   // React plugin provides fast refresh and JSX support
   plugins: [react()],
 
+  test: {
+    setupFiles: './vitest.setup.js',
+    environment: 'jsdom',
+    globals: true,
+  },
+
   // CSS configuration
   css: {
     postcss: {

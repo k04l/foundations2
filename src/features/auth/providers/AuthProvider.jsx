@@ -176,6 +176,7 @@ export const AuthProvider = ({ children }) => {
     
         // Store tokens in localStorage
         localStorage.setItem('token', data.token);
+        console.log('Token stored:', data.token); // for debugging
         if (data.refreshToken) {
             localStorage.setItem('refreshToken', data.refreshToken);
         }
@@ -204,6 +205,8 @@ export const AuthProvider = ({ children }) => {
             };
         }   
     };   
+
+    
 
     // Add this function to help debug auth state
     const checkAuthState = () => {
