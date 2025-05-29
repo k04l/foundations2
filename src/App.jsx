@@ -22,6 +22,8 @@ import { useNavigation } from './features/auth/hooks/useNavigation';
 import { Loader } from './components/ui/loader';
 import ErrorBoundary from './features/auth/components/ErrorBoundary';
 import PropTypes from 'prop-types';
+import { AppKitProvider } from './components/WalletProvider';
+import { WalletConnectButtons } from './components/WalletConnectButtons';
 
 
 // Separate Header component with dropdown functionality
@@ -101,6 +103,7 @@ const Header = () => {
             </div>
             
             <div className="flex items-center space-x-4">
+              <WalletConnectButtons />
               {/* Show Create Account button on login page */}
               {currentPath === '/login' && !isAuthenticated && (
                 <button
@@ -371,11 +374,13 @@ const AppContent = () => {
 const App = () => {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <NavigationProvider>
-          <AppContent />
-        </NavigationProvider>
-      </AuthProvider>
+      <AppKitProvider>
+        <AuthProvider>
+          <NavigationProvider>
+              <AppContent />
+          </NavigationProvider>
+        </AuthProvider>
+      </AppKitProvider>
     </ErrorBoundary>
   );
 };

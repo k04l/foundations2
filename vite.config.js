@@ -5,6 +5,10 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import tailwindcss from 'tailwindcss';
 import autoprefixer from 'autoprefixer';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   // React plugin provides fast refresh and JSX support
@@ -27,15 +31,23 @@ export default defineConfig({
   },
 
   define: {
-    'import.meta.env.VITE_API_URL': JSON.stringify('http://localhost:3000')
+    'process.env': {
+      // Define environment variables for the frontend
+      'VITE_API_URL': JSON.stringify('http://localhost:3000'),
+      // Uncomment below to use Vite's environment variables
+      'import.meta.env.VITE_API_URL': JSON.stringify('http://localhost:3000')
+    },
+    global: 'window', // Add this line for buffer polyfill compatibility
+    // 'import.meta.env.VITE_API_URL': JSON.stringify('http://localhost:3000')
   },
 
   // Path aliases make imports cleaner and more maintainable
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      buffer: 'buffer',
+      '@': path.resolve(__dirname, './src'), // Add this for @ alias
       // 'src': path.resolve(__dirname, './src')
-    }
+    },
   },
 
   // Development server configuration
