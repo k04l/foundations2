@@ -86,7 +86,7 @@ app.use((req, res, next) => {
 
 // CORS configuration
 app.use(cors({
-  origin: 'http://127.0.0.1:5173',
+  origin: config.corsOrigin.split(',').map(origin => origin.trim()),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -140,7 +140,7 @@ const fileUploadOptions = {
   useTempFiles: true,
   tempFileDir: path.join(__dirname, '../tmp/'),
   createParentPath: true,
-  debug: process.env.NODE_ENV === 'development',
+  debug: config.nodeEnv === 'development',
   uploadTimeout: 60000,
   limits: {
       fileSize: 1024 * 1024 * 10, // 10 MB
