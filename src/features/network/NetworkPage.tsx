@@ -76,6 +76,7 @@ export default function NetworkPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [userProjects, setUserProjects] = useState<Project[]>([]);
 
   // Fetch companies on mount
   useEffect(() => {
@@ -88,6 +89,23 @@ export default function NetworkPage() {
       })
       .catch(err => {
         setError('Failed to load companies');
+        setLoading(false);
+      });
+  }, []);
+
+  // Fetch user projects on mount
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/v1/userdata/projects', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    })
+      .then(res => res.json())
+      .then(data => {
+        setUserProjects(data.projects || []);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError('Failed to load your projects');
         setLoading(false);
       });
   }, []);
@@ -385,6 +403,87 @@ export default function NetworkPage() {
       setError(err.message || 'Failed to update project people');
       setCompanies(prev => prev.map(c => c.id === prevCompany.id ? prevCompany : c));
       setSelectedCompany(prevCompany);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add Project (user-specific)
+  const handleAddUserProject = async (project: Omit<Project, 'id' | 'peopleIds'>) => {
+    setLoading(true);
+    setError(null);
+    const optimisticId = Date.now().toString();
+    const optimisticProject = { ...project, id: optimisticId, peopleIds: [] };
+    setUserProjects(prev => [...prev, optimisticProject]);
+    setShowProjectForm(false);
+    try {
+      const response = await fetch('/api/v1/userdata/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(optimisticProject),
+      });
+      if (!response.ok) throw new Error('Failed to add project');
+      const data = await response.json();
+      setUserProjects(data.projects || []);
+      showSuccess('Project added!');
+    } catch (err: any) {
+      setError(err.message || 'Failed to add project');
+      setUserProjects(prev => prev.filter(p => p.id !== optimisticId));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Edit Project (user-specific)
+  const handleEditUserProject = async (project: Project) => {
+    setLoading(true);
+    setError(null);
+    const prevProjects = [...userProjects];
+    setUserProjects(prev => prev.map(p => p.id === project.id ? { ...p, ...project } : p));
+    setEditingProject(null);
+    setShowProjectForm(false);
+    try {
+      const response = await fetch('/api/v1/userdata/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(project),
+      });
+      if (!response.ok) throw new Error('Failed to edit project');
+      const data = await response.json();
+      setUserProjects(data.projects || []);
+      showSuccess('Project updated!');
+    } catch (err: any) {
+      setError(err.message || 'Failed to edit project');
+      setUserProjects(prevProjects);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete Project (user-specific)
+  const handleDeleteUserProject = async (id: string) => {
+    setLoading(true);
+    setError(null);
+    const prevProjects = [...userProjects];
+    setUserProjects(prev => prev.filter(p => p.id !== id));
+    try {
+      const response = await fetch(`/api/v1/userdata/projects/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      if (!response.ok) throw new Error('Failed to delete project');
+      const data = await response.json();
+      setUserProjects(data.projects || []);
+      showSuccess('Project deleted!');
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete project');
+      setUserProjects(prevProjects);
     } finally {
       setLoading(false);
     }

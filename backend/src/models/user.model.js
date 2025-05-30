@@ -40,7 +40,37 @@ const userSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
-    }
+    },
+    orgId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Org',
+        default: null
+    },
+    projects: [
+        {
+            id: { type: String, required: true },
+            name: { type: String, required: true },
+            address: String,
+            city: String,
+            localASHRAEWeatherStation: String,
+            costPerKwh: String,
+            costPerGpm: String,
+            costPerGpmSewer: String,
+            costPerMbtuGas: String,
+            equipmentGroups: { type: Array, default: [] },
+            peopleIds: { type: Array, default: [] },
+            description: String
+        }
+    ],
+    people: [
+        {
+            id: { type: String, required: true },
+            name: { type: String, required: true },
+            email: String,
+            phone: String,
+            notes: String
+        }
+    ]
 });
 
 // Encrypt password using bcrypt

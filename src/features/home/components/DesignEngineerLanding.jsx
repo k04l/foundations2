@@ -223,45 +223,42 @@ export const DesignEngineerLanding = () => {
     { name: 'costPerMbtuGas', label: '$/MBTU Gas' },
   ];
 
+  // Add a companyId for demo/testing (in real app, get from user context or selection)
+  const companyId = 'demo-company';
+
   // **Backend Persistence**
-    useEffect(() => {
-        // Fetch projects on mount
-        const fetchProjects = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch('/api/projects', {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                const data = await response.json();
-                setProjects(data.projects || []);
-            } catch (error) {
-                console.error('Failed to fetch projects:', error);
-            }
-        };
-        if (isAuthenticated) fetchProjects();
-    }, [isAuthenticated]);
+  const saveProject = async () => {
+    if (!selectedProject) return;
+    try {
+      await fetch('/api/v1/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ ...selectedProject, companyId }),
+      });
+    } catch (error) {
+      console.error('Failed to save project:', error);
+    }
+  };
 
-    const saveProject = async () => {
-        if (!selectedProject) return;
-        try {
-            await fetch('/api/projects', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${localStorage.getItem('token')}`,
-                },
-                body: JSON.stringify(selectedProject),
-            });
-        }catch (error) {
-            console.error('Failed to save project:', error);
-        }
+  useEffect(() => {
+    // Fetch projects on mount
+    const fetchProjects = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/v1/projects', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await response.json();
+        setProjects(data.projects || []);
+      } catch (error) {
+        console.error('Failed to fetch projects:', error);
+      }
     };
-
-    useEffect(() => {
-        if (selectedProject) saveProject();
-    }, [selectedProject]);
-
-  // **Functions**
+    if (isAuthenticated) fetchProjects();
+  }, [isAuthenticated]);
 
   const addProject = () => {
     if (!newProjectName.trim()) {
@@ -288,6 +285,15 @@ export const DesignEngineerLanding = () => {
     setSelectedProjectId(newProject.id);
     setShowAddProjectModal(false);
     setNewProjectName('');
+    // Persist new project
+    fetch('/api/v1/projects', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ ...newProject, companyId }),
+    }).catch(err => console.error('Failed to persist new project:', err));
   };
 
   const deleteProject = (id) => {

@@ -1,10 +1,11 @@
 // backend/src/api/controllers/company.controller.js
 import Company from '../../models/company.model.js';
+import Org from '../../models/org.model.js';
 
 // Get all companies
 export const getCompanies = async (req, res, next) => {
   try {
-    const companies = await Company.find();
+    const companies = await Company.find({ _id: { $in: req.user.orgId ? (await Org.findById(req.user.orgId)).companies : [] } });
     res.status(200).json({ companies });
   } catch (err) {
     next(err);
@@ -15,11 +16,25 @@ export const getCompanies = async (req, res, next) => {
 export const upsertCompany = async (req, res, next) => {
   try {
     const { id, ...companyData } = req.body;
-    const company = await Company.findOneAndUpdate(
-      { id },
-      { $set: { ...companyData, id } },
-      { upsert: true, new: true }
-    );
+    if (!req.user.orgId) return res.status(403).json({ error: 'User is not part of an organization' });
+    let org = await Org.findById(req.user.orgId);
+    let company;
+    if (id) {
+      company = await Company.findOneAndUpdate(
+        { id },
+        { $set: { ...companyData, id } },
+        { upsert: true, new: true }
+      );
+      if (!org.companies.includes(company._id)) {
+        org.companies.push(company._id);
+        await org.save();
+      }
+    } else {
+      company = new Company({ ...companyData });
+      await company.save();
+      org.companies.push(company._id);
+      await org.save();
+    }
     res.status(200).json({ company });
   } catch (err) {
     next(err);
@@ -30,7 +45,11 @@ export const upsertCompany = async (req, res, next) => {
 export const deleteCompany = async (req, res, next) => {
   try {
     const { id } = req.params;
+    if (!req.user.orgId) return res.status(403).json({ error: 'User is not part of an organization' });
+    const org = await Org.findById(req.user.orgId);
     await Company.findOneAndDelete({ id });
+    org.companies = org.companies.filter(cid => cid.toString() !== id);
+    await org.save();
     res.status(200).json({ success: true });
   } catch (err) {
     next(err);

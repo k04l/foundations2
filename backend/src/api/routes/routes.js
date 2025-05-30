@@ -5,6 +5,7 @@ import authRoutes from './auth.routes.js';
 import profileRoutes from './profile.routes.js';
 import projectsRoutes from './projects.routes.js';
 import companyRoutes from './company.routes.js';
+import userdataRoutes from './userdata.routes.js';
 // import debugRoutes from './debug.routes.js';
 
 // Import controllers (you'll need to create these)
@@ -16,6 +17,7 @@ import companyRoutes from './company.routes.js';
 //   updateItem,
 //   deleteItem
 // } from '../controllers/items.controller.js';
+import { protect } from '../../middleware/auth.middleware.js';
 
 const router = express.Router();
 
@@ -34,8 +36,9 @@ router.use((req, res, next) => {
 
 router.use('/auth', authRoutes);
 router.use('/profiles', profileRoutes);
-router.use('/projects', projectsRoutes);
-router.use('/companies', companyRoutes);
+router.use('/projects', protect, projectsRoutes);
+router.use('/companies', protect, companyRoutes);
+router.use('/userdata', userdataRoutes);
 
 // router.use('/debug', debugRoutes);
 
@@ -128,6 +131,7 @@ router.get('/debug/routes', (req, res) => {
 
 // Error handling for undefined routes
 router.all('*', (req, res) => {
+  console.log('404 catch-all hit:', req.method, req.originalUrl);
   res.status(404).json({ error: 'Route not found' });
 });
 
