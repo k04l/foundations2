@@ -24,7 +24,7 @@ import ErrorBoundary from './features/auth/components/ErrorBoundary';
 import PropTypes from 'prop-types';
 import { AppKitProvider } from './components/WalletProvider';
 import { WalletConnectButtons } from './components/WalletConnectButtons';
-
+import NetworkPage from './features/network/NetworkPage';
 
 // Separate Header component with dropdown functionality
 const Header = () => {
@@ -229,6 +229,8 @@ const AppRoutes = ({ currentPath, isAuthenticated, user, navigate }) => {
           <ResendVerification />
         </div>
       );
+    case '/network':
+      return <NetworkPage />;
     default:
       return (
         <div className="text-center py-12">
