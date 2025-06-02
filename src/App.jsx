@@ -25,6 +25,7 @@ import PropTypes from 'prop-types';
 import { AppKitProvider } from './components/WalletProvider';
 import { WalletConnectButtons } from './components/WalletConnectButtons';
 import NetworkPage from './features/network/NetworkPage';
+import CoursesPage from './features/network/CoursesPage';
 
 // Separate Header component with dropdown functionality
 const Header = () => {
@@ -231,6 +232,8 @@ const AppRoutes = ({ currentPath, isAuthenticated, user, navigate }) => {
       );
     case '/network':
       return <NetworkPage />;
+    case '/courses':
+      return <CoursesPage />;
     default:
       return (
         <div className="text-center py-12">
