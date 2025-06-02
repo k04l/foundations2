@@ -25,6 +25,26 @@ export default function IndividualForm({ onSave, onCancel, initial }: Individual
         <label className="block text-sm font-medium mb-1 text-black">Name</label>
         <input className="input input-bordered w-full text-black" value={name} onChange={e => setName(e.target.value)} required />
       </div>
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-blue-300">Expertise</label>
+        <input
+          type="text"
+          name="expertise"
+          value={formData.expertise || ''}
+          onChange={handleChange}
+          className="input input-bordered w-full"
+        />
+      </div>
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-blue-300">Role</label>
+        <input
+          type="text"
+          name="role"
+          value={formData.role || ''}
+          onChange={handleChange}
+          className="input input-bordered w-full"
+        />
+      </div>
       <div className="mb-3">
         <label className="block text-sm font-medium mb-1 text-black">Email</label>
         <input className="input input-bordered w-full text-black" value={email} onChange={e => setEmail(e.target.value)} />
