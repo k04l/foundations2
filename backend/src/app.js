@@ -209,6 +209,23 @@ app.use('/uploads', express.static(uploadPath, {
 // Request logging
 app.use(logRequest);
 
+// Session middleware (must be before passport and routes)
+app.use(
+  session({
+    secret: config.sessionSecret || config.session_secret || 'fallback_secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      sameSite: 'lax', // 'none' if using HTTPS
+      secure: false,   // true if using HTTPS
+    }
+  })
+);
+
+// Initialize passport
+app.use(passport.initialize());
+app.use(passport.session());
+
 // Debug middleware
 app.use((req, res, next) => {
   console.log('App Debug:', {
@@ -229,18 +246,6 @@ app.use('/api/v1', (req, res, next) => {
   });
   next();
 }, routes);
-
-// Add session middleware before passport
-app.use(
-  session({
-    secret: config.sessionSecret,
-    resave: false,
-    saveUninitialized: false,
-  })
-);
-// Initialize passport
-app.use(passport.initialize());
-app.use(passport.session());
 
 // Add error logging middleware
 app.use((err, req, res, next) => {

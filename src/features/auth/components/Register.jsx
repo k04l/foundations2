@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import GoogleLoginButton from '../../../components/auth/GoogleLoginButton';
 
 export const Register = () => {
   const [formData, setFormData] = useState({
@@ -68,6 +69,16 @@ export const Register = () => {
 
   return (
     <div className="w-full max-w-md mx-auto mt-8">
+      {/* Google Register Button */}
+      <GoogleLoginButton label="Sign up with Google" />
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-blue-500/20" />
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-2 bg-white text-gray-500">Or continue with</span>
+        </div>
+      </div>
       <form onSubmit={handleSubmit} className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
         <h2 className="text-2xl font-bold mb-6 text-gray-800">Register</h2>
         
