@@ -1,4 +1,5 @@
 // src/app.js
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -16,6 +17,8 @@ import { connectDB } from './config/database.js';
 import routes from './api/routes/routes.js';
 import mongoose from 'mongoose';
 import fs from 'fs/promises';
+import session from 'express-session';
+import passport from './config/passport.js';
 
 const app = express();
 
@@ -226,6 +229,18 @@ app.use('/api/v1', (req, res, next) => {
   });
   next();
 }, routes);
+
+// Add session middleware before passport
+app.use(
+  session({
+    secret: config.sessionSecret,
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+// Initialize passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Add error logging middleware
 app.use((err, req, res, next) => {

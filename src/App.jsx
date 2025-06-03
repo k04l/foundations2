@@ -26,6 +26,7 @@ import { AppKitProvider } from './components/WalletProvider';
 import { WalletConnectButtons } from './components/WalletConnectButtons';
 import NetworkPage from './features/network/NetworkPage';
 import CoursesPage from './features/network/CoursesPage';
+import GoogleAuthSuccess from './features/auth/components/GoogleAuthSuccess';
 
 // Separate Header component with dropdown functionality
 const Header = () => {
@@ -234,6 +235,8 @@ const AppRoutes = ({ currentPath, isAuthenticated, user, navigate }) => {
       return <NetworkPage />;
     case '/courses':
       return <CoursesPage />;
+    case '/auth/google/success':
+      return <GoogleAuthSuccess />;
     default:
       return (
         <div className="text-center py-12">

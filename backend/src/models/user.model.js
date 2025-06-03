@@ -17,6 +17,8 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Please add an email'],
         unique: true,
+        lowercase: true,
+        trim: true,
         match: [
             /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
             'Please add a valid email'
@@ -24,9 +26,21 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, 'Please add a password'],
+        required: function() {
+            return !this.googleId; // Password not required for Google OAuth users
+        },
         minlength: 6,
         select: false
+    },
+    googleId: {
+        type: String,
+        sparse: true, // Allows null values while maintaining uniqueness
+        unique: true,
+        default: null
+    },
+    avatar: {
+        type: String,
+        default: null
     },
     isEmailVerified: {
         type: Boolean,

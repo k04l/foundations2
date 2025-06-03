@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigation } from '../hooks/useNavigation';
 import { Alert, AlertDescription } from '../../../components/ui/alert';
+import GoogleLoginButton from '../../../components/auth/GoogleLoginButton';
 
 export const Login = () => {
   // State management for form fields and UI status
@@ -69,6 +70,19 @@ export const Login = () => {
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-blue-100">Welcome Back</h2>
             <p className="mt-2 text-sm text-blue-300">Please sign in to your account</p>
+          </div>
+
+          {/* Google Login Button */}
+          <GoogleLoginButton />
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-blue-500/20" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-gray-900/80 text-blue-300">Or continue with</span>
+            </div>
           </div>
 
           {/* Error Alert */}

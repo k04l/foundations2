@@ -12,6 +12,10 @@ import { protect } from '../../middleware/auth.middleware.js';
 //import { protect } from '../middleware/auth.middleware.js';
 import { resendVerification, resetPasswordRequest, resetPassword, changePassword } from '../controllers/auth.controller.js';
 import { verify } from 'crypto';
+import passport from '../../config/passport.js';
+import jwt from 'jsonwebtoken';
+import { config } from '../../config/env.js';
+import crypto from 'crypto';
 
 const router = express.Router();
 
@@ -28,7 +32,7 @@ router.use((req, res, next) => {
 });
 
 // Development-only route for deleting test users
-if (process.env.NODE_ENV === 'development') {
+if (config.nodeEnv === 'development') {
     router.delete('/delete-test-user/:email', async (req, res) => {
         try {
             const result = await User.deleteOne({ email: req.params.email });
@@ -87,5 +91,33 @@ router.post('/resend-verification', protect, resendVerification);
 router.post('/reset-password-request', resetPasswordRequest);
 router.post('/reset-password/:token', resetPassword);
 router.post('/change-password', protect, changePassword);
+
+// Google OAuth routes
+router.get(
+  '/google',
+  (req, res, next) => {
+    const state = crypto.randomBytes(32).toString('hex');
+    req.session.oauthState = state;
+    passport.authenticate('google', {
+      scope: ['profile', 'email'],
+      state: state
+    })(req, res, next);
+  }
+);
+
+router.get(
+  '/google/callback',
+  passport.authenticate('google', { session: false }),
+  (req, res) => {
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: req.user._id, email: req.user.email },
+      config.jwtSecret,
+      { expiresIn: '7d' }
+    );
+    // Redirect to frontend with token
+    res.redirect(`${config.clientUrl}/auth/google/success?token=${token}`);
+  }
+);
 
 export default router;
