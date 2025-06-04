@@ -383,11 +383,11 @@ const App = () => {
   return (
     <ErrorBoundary>
       <AppKitProvider>
-        <AuthProvider>
-          <NavigationProvider>
-              <AppContent />
-          </NavigationProvider>
-        </AuthProvider>
+        <NavigationProvider>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </NavigationProvider>
       </AppKitProvider>
     </ErrorBoundary>
   );

@@ -102,9 +102,11 @@ router.get(
     }
     const state = crypto.randomBytes(32).toString('hex');
     req.session.oauthState = state;
+    const prompt = req.query.prompt || 'select_account';
     passport.authenticate('google', {
       scope: ['profile', 'email'],
-      state: state
+      state: state,
+      prompt // forward prompt param to Google
     })(req, res, next);
   }
 );

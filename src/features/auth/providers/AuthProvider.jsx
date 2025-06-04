@@ -9,6 +9,7 @@ export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const { navigate } = useNavigation();
     
     const retryOperation = async (operation, retries = 3, delay = 1000) => {
         try {
@@ -67,6 +68,7 @@ export const AuthProvider = ({ children }) => {
 
         useEffect(() => {
           initializeAuth();
+          // eslint-disable-next-line react-hooks/exhaustive-deps
         }, []);
 
         // const loadUserData = () => {
@@ -206,48 +208,32 @@ export const AuthProvider = ({ children }) => {
         }   
     };   
 
-    
-
-    // Add this function to help debug auth state
-    const checkAuthState = () => {
-        const token = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
-        console.log('Current auth state:', {
-            token: token ? 'present' : 'missing',
-            storedUser: storedUser ? JSON.parse(storedUser) : 'missing',
-            contextUser: user
-        }); 
+    // Add loginWithToken for Google OAuth
+    const loginWithToken = (token) => {
+        try {
+            const decodedToken = decodeJWT(token);
+            if (!decodedToken?.id) {
+                throw new Error('Invalid token: no user ID');
+            }
+            const userData = {
+                id: decodedToken.id,
+                email: decodedToken.email,
+                name: decodedToken.name,
+                // Add any other fields from the token if needed
+            };
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(userData));
+            setUser(userData);
+            setIsAuthenticated(true);
+        } catch (error) {
+            console.error('loginWithToken error:', error);
+            setIsAuthenticated(false);
+            setUser(null);
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+        }
     };
 
-    useEffect(() => {
-        checkAuthState();
-    }, [user]);
-    
-    
-    //     // Handle successful login
-    //     // Store tokens
-    //     if (data.token) {
-    //         localStorage.setItem('token', data.token);
-    //         if (data.refreshToken) {
-    //           localStorage.setItem('refreshToken', data.refreshToken);
-    //         }          
-    //         setIsAuthenticated(true);
-    //         return { success: true };
-    //       } else {
-    //         return { 
-    //           success: false,
-    //           error: 'No token received from server'
-    //         };
-    //       }
-    //       } catch (error) {
-    //         console.error('AuthContext login error:', error);
-    //         return { 
-    //           success: false,
-    //           error: 'An error occurred during login'
-    //         };
-    //       }
-    // };
-    
     const logout = () => {
         try {
         // Clear tokens
@@ -275,6 +261,7 @@ export const AuthProvider = ({ children }) => {
         user,
         loading,
         login,
+        loginWithToken,
         logout,
         checkAuth
     };

@@ -1,27 +1,31 @@
-import React, { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth'; // Adjust path as needed
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { useNavigation } from '../hooks/useNavigation';
 
 const GoogleAuthSuccess: React.FC = () => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { login } = useAuth(); // Assuming you have an auth context
+  const { loginWithToken, isAuthenticated } = useAuth();
+  const { navigate } = useNavigation();
+  const [pendingLogin, setPendingLogin] = useState(false);
 
   useEffect(() => {
-    const token = searchParams.get('token');
-    
+    // Get token from URL query string manually
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+
     if (token) {
-      // Store token and update auth state
       localStorage.setItem('token', token);
-      login(token); // Update your auth context
-      
-      // Redirect to dashboard or home
-      navigate('/dashboard');
+      loginWithToken(token); // Use the new loginWithToken function
+      setPendingLogin(true);
     } else {
-      // Handle error
       navigate('/login?error=google_auth_failed');
     }
-  }, [searchParams, navigate, login]);
+  }, [loginWithToken, navigate]);
+
+  useEffect(() => {
+    if (pendingLogin && isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [pendingLogin, isAuthenticated, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">
