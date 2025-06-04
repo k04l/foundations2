@@ -96,6 +96,10 @@ router.post('/change-password', protect, changePassword);
 router.get(
   '/google',
   (req, res, next) => {
+    if (!req.session) {
+      console.error('Session is undefined in /auth/google route!');
+      return res.status(500).json({ error: 'Session is not initialized. Check session middleware order.' });
+    }
     const state = crypto.randomBytes(32).toString('hex');
     req.session.oauthState = state;
     passport.authenticate('google', {
