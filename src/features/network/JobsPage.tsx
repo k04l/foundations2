@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Clock, DollarSign, Building, Users, Filter, Star, Bookmark, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, MapPin, Clock, DollarSign, Building, Users, Filter, Star, Bookmark, ExternalLink, Clipboard } from 'lucide-react';
 
 // Types
 interface Job {
@@ -44,7 +44,7 @@ interface FreelanceProject {
 }
 
 const JobsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'jobs' | 'freelance'>('jobs');
+  const [activeTab, setActiveTab] = useState<'jobs' | 'freelance' | 'bookmarked' | 'applications'>('jobs');
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -52,6 +52,9 @@ const JobsPage: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [freelanceProjects, setFreelanceProjects] = useState<FreelanceProject[]>([]);
+  // Auto-hide header state
+  const [showHeader, setShowHeader] = useState(true);
+  const lastScrollY = useRef(window.scrollY);
 
   // Mock data - replace with API calls
   useEffect(() => {
@@ -145,6 +148,24 @@ const JobsPage: React.FC = () => {
     setFreelanceProjects(mockFreelanceProjects);
   }, []);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY < 80) {
+        setShowHeader(true);
+        lastScrollY.current = window.scrollY;
+        return;
+      }
+      if (window.scrollY > lastScrollY.current) {
+        setShowHeader(false); // scrolling down
+      } else {
+        setShowHeader(true); // scrolling up
+      }
+      lastScrollY.current = window.scrollY;
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const categories = [
     { value: 'all', label: 'All Categories' },
     { value: 'mechanical', label: 'Mechanical Engineering' },
@@ -208,36 +229,66 @@ const JobsPage: React.FC = () => {
     return days === 0 ? 'Today' : days === 1 ? '1 day ago' : `${days} days ago`;
   };
 
+  const applications = [
+    { id: '1', jobTitle: 'Senior Mechanical Engineer - HVAC Systems', company: 'TechMech Solutions', status: 'Interview', appliedDate: '2025-06-02' },
+    { id: '2', jobTitle: 'Electrical Project Manager', company: 'PowerGrid Industries', status: 'Applied', appliedDate: '2025-06-01' },
+  ];
+
+  const bookmarkedJobs = jobs.filter(j => j.saved);
+  const bookmarkedProjects = freelanceProjects.filter(p => p.saved);
+
   return (
     <div className="min-h-screen bg-dark-primary text-blue-100">
-      {/* Header */}
-      <div className="bg-blue-950 border-b border-blue-900 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <h1 className="text-3xl font-bold text-blue-100 mb-2">MEP Engineering Jobs</h1>
-            <p className="text-blue-300">Find opportunities in Mechanical, Electrical, and Plumbing engineering</p>
-          </div>
-          {/* Tab Navigation */}
-          <div className="flex space-x-8 border-b border-blue-900">
+      {/* Sticky/Auto-hiding Tab Navigation Header */}
+      <div
+        className={`bg-blue-950 border-b border-blue-900 shadow-sm sticky top-0 z-10 transition-transform duration-300 ${showHeader ? 'translate-y-0' : '-translate-y-full'}`}
+        style={{ willChange: 'transform' }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col gap-2">
+          {/* Remove bulky jobs page title/desc, just show tabs */}
+          <div className="flex flex-wrap gap-2 border-b border-blue-900 pt-4">
             <button
               onClick={() => setActiveTab('jobs')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-2 px-2 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'jobs'
                   ? 'border-bernoullia-500 text-bernoullia-400'
                   : 'border-transparent text-blue-300 hover:text-blue-100 hover:border-blue-400'
               }`}
             >
-              Job Listings ({filteredJobs.length})
+              Job Listings
             </button>
             <button
               onClick={() => setActiveTab('freelance')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-2 px-2 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'freelance'
                   ? 'border-bernoullia-500 text-bernoullia-400'
                   : 'border-transparent text-blue-300 hover:text-blue-100 hover:border-blue-400'
               }`}
             >
-              Freelance Projects ({filteredProjects.length})
+              Freelance Projects
+            </button>
+            <button
+              onClick={() => setActiveTab('bookmarked')}
+              className={`py-2 px-2 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'bookmarked'
+                  ? 'border-bernoullia-500 text-bernoullia-400'
+                  : 'border-transparent text-blue-300 hover:text-blue-100 hover:border-blue-400'
+              }`}
+            >
+              Bookmarked
+              {(bookmarkedJobs.length + bookmarkedProjects.length > 0) && (
+                <span className="ml-1 text-xs bg-bernoullia-500/20 text-bernoullia-400 px-2 py-0.5 rounded-full">{bookmarkedJobs.length + bookmarkedProjects.length}</span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('applications')}
+              className={`py-2 px-2 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'applications'
+                  ? 'border-bernoullia-500 text-bernoullia-400'
+                  : 'border-transparent text-blue-300 hover:text-blue-100 hover:border-blue-400'
+              }`}
+            >
+              <Clipboard className="inline w-4 h-4 mr-1 align-text-bottom" /> My Applications
             </button>
           </div>
         </div>
@@ -464,6 +515,212 @@ const JobsPage: React.FC = () => {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+        {/* Bookmarked Tab */}
+        {activeTab === 'bookmarked' && (
+          <div className="space-y-4">
+            {bookmarkedJobs.length === 0 && bookmarkedProjects.length === 0 && (
+              <div className="text-center py-12">
+                <h3 className="text-lg font-medium text-blue-100 mb-2">No bookmarks yet</h3>
+                <p className="text-blue-300">Bookmark jobs or projects to see them here.</p>
+              </div>
+            )}
+            {bookmarkedJobs.map(job => (
+              <div key={job.id} className="bernoullia-card">
+                <div className="p-4 sm:p-6">
+                  <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="text-lg sm:text-xl font-semibold text-blue-100">{job.title}</h3>
+                        {job.featured && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100/10 text-yellow-300 text-xs font-medium rounded-full">
+                            <Star className="w-3 h-3" />
+                            Featured
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3 text-blue-300 mb-3 text-sm">
+                        <span className="flex items-center gap-1">
+                          <Building className="w-4 h-4" />
+                          {job.company}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-4 h-4" />
+                          {job.location}
+                          {job.isRemote && <span className="text-green-400 ml-1">(Remote OK)</span>}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-4 h-4" />
+                          {daysAgo(job.postedDate)}
+                        </span>
+                      </div>
+                      <p className="text-blue-200 mb-4 text-sm line-clamp-3">{job.description}</p>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {job.requirements.slice(0, 3).map((req, index) => (
+                          <span key={index} className="px-3 py-1 bg-blue-900/60 text-blue-200 text-xs rounded-full">
+                            {req}
+                          </span>
+                        ))}
+                        {job.requirements.length > 3 && (
+                          <span className="px-3 py-1 bg-blue-900/60 text-blue-200 text-xs rounded-full">
+                            +{job.requirements.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-row md:flex-col items-end gap-2 md:ml-6">
+                      <button
+                        onClick={() => toggleSaveJob(job.id)}
+                        className={`p-2 rounded-full ${job.saved ? 'text-bernoullia-400 bg-blue-900' : 'text-blue-300 hover:text-blue-100 hover:bg-blue-900'}`}
+                        aria-label={job.saved ? 'Unsave job' : 'Save job'}
+                      >
+                        <Bookmark className={`w-5 h-5 ${job.saved ? 'fill-current' : ''}`} />
+                      </button>
+                      <div className="text-right">
+                        <div className="text-lg font-semibold text-blue-100 flex items-center gap-1">
+                          <DollarSign className="w-4 h-4" />
+                          {formatSalary(job.salary)}
+                        </div>
+                        <div className="text-xs text-blue-300 capitalize">
+                          {job.type.replace('-', ' ')} • {job.experienceLevel}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-blue-900 gap-3">
+                    <span className="inline-flex items-center px-3 py-1 bg-bernoullia-500/10 text-bernoullia-400 text-xs font-medium rounded-full capitalize">
+                      {job.category.replace('-', ' ')}
+                    </span>
+                    <button className="bernoullia-button flex items-center gap-2 w-full sm:w-auto justify-center">
+                      Apply Now
+                      <ExternalLink className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {bookmarkedProjects.map(project => (
+              <div key={project.id} className="bernoullia-card">
+                <div className="p-4 sm:p-6">
+                  <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="text-lg sm:text-xl font-semibold text-blue-100">{project.title}</h3>
+                        {project.featured && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100/10 text-yellow-300 text-xs font-medium rounded-full">
+                            <Star className="w-3 h-3" />
+                            Featured
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3 text-blue-300 mb-3 text-sm">
+                        <span className="flex items-center gap-1">
+                          <Building className="w-4 h-4" />
+                          {project.client}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-4 h-4" />
+                          {project.duration}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Users className="w-4 h-4" />
+                          Team: {project.currentTeamMembers}/{project.teamSize}
+                        </span>
+                      </div>
+                      <p className="text-blue-200 mb-4 text-sm line-clamp-3">{project.description}</p>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {project.skillsNeeded.map((skill, index) => (
+                          <span key={index} className="px-3 py-1 bg-green-900/60 text-green-300 text-xs rounded-full">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="text-xs text-blue-300">
+                        <span className="font-medium">Deadline:</span> {new Date(project.deadline).toLocaleDateString()} •
+                        <span className="font-medium ml-2">Posted:</span> {daysAgo(project.postedDate)}
+                      </div>
+                    </div>
+                    <div className="flex flex-row md:flex-col items-end gap-2 md:ml-6">
+                      <button
+                        onClick={() => toggleSaveProject(project.id)}
+                        className={`p-2 rounded-full ${project.saved ? 'text-bernoullia-400 bg-blue-900' : 'text-blue-300 hover:text-blue-100 hover:bg-blue-900'}`}
+                        aria-label={project.saved ? 'Unsave project' : 'Save project'}
+                      >
+                        <Bookmark className={`w-5 h-5 ${project.saved ? 'fill-current' : ''}`} />
+                      </button>
+                      <div className="text-right">
+                        <div className="text-lg font-semibold text-blue-100 flex items-center gap-1">
+                          <DollarSign className="w-4 h-4" />
+                          {formatBudget(project.budget)}
+                        </div>
+                        <div className="text-xs text-blue-300">Project Budget</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-blue-900 gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center px-3 py-1 bg-purple-900/40 text-purple-300 text-xs font-medium rounded-full capitalize">
+                        {project.category.replace('-', ' ')}
+                      </span>
+                      {project.currentTeamMembers < project.teamSize && (
+                        <span className="inline-flex items-center px-3 py-1 bg-orange-900/40 text-orange-300 text-xs font-medium rounded-full">
+                          Hiring {project.teamSize - project.currentTeamMembers} more
+                        </span>
+                      )}
+                    </div>
+                    <button className="bernoullia-button flex items-center gap-2 w-full sm:w-auto justify-center bg-green-600 hover:bg-green-500">
+                      Join Team
+                      <Users className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {/* Applications Tab */}
+        {activeTab === 'applications' && (
+          <div className="space-y-4">
+            {applications.length === 0 ? (
+              <div className="text-center py-12">
+                <h3 className="text-lg font-medium text-blue-100 mb-2">No applications yet</h3>
+                <p className="text-blue-300">Apply to jobs to track your applications here.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-blue-300 border-b border-blue-900">
+                      <th className="py-2 px-2 text-left">Job Title</th>
+                      <th className="py-2 px-2 text-left">Company</th>
+                      <th className="py-2 px-2 text-left">Status</th>
+                      <th className="py-2 px-2 text-left">Applied</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {applications.map(app => (
+                      <tr key={app.id} className="border-b border-blue-900 hover:bg-blue-900/30">
+                        <td className="py-2 px-2 text-blue-100 font-medium">{app.jobTitle}</td>
+                        <td className="py-2 px-2 text-blue-300">{app.company}</td>
+                        <td className="py-2 px-2">
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            app.status === 'Interview' ? 'bg-green-900/40 text-green-300' :
+                            app.status === 'Applied' ? 'bg-blue-900/40 text-blue-300' :
+                            app.status === 'Offer' ? 'bg-yellow-900/40 text-yellow-300' :
+                            app.status === 'Rejected' ? 'bg-red-900/40 text-red-300' :
+                            'bg-blue-900/40 text-blue-300'
+                          }`}>
+                            {app.status}
+                          </span>
+                        </td>
+                        <td className="py-2 px-2 text-blue-300">{app.appliedDate}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
         {/* No Results */}
