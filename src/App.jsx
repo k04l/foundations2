@@ -30,6 +30,7 @@ import GoogleAuthSuccess from './features/auth/components/GoogleAuthSuccess';
 import JobsPage from './features/network/JobsPage'; // Import the new JobsPage component
 import ToolsPage from './features/tools/ToolsPage';
 import ProjectPicturePage from './features/tools/ProjectPicturePage';
+import { BrowserRouter } from 'react-router-dom';
 
 // Separate Header component with dropdown functionality
 const Header = () => {
@@ -460,11 +461,14 @@ const App = () => {
   return (
     <ErrorBoundary>
       <AppKitProvider>
-        <NavigationProvider>
-          <AuthProvider>
-            <AppContent />
-          </AuthProvider>
-        </NavigationProvider>
+        {/* BrowserRouter must be INSIDE AppKitProvider for context to work with wallet adapters */}
+        <BrowserRouter>
+          <NavigationProvider>
+            <AuthProvider>
+              <AppContent />
+            </AuthProvider>
+          </NavigationProvider>
+        </BrowserRouter>
       </AppKitProvider>
     </ErrorBoundary>
   );
