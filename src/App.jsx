@@ -27,6 +27,7 @@ import { WalletConnectButtons } from './components/WalletConnectButtons';
 import NetworkPage from './features/network/NetworkPage';
 import CoursesPage from './features/network/CoursesPage';
 import GoogleAuthSuccess from './features/auth/components/GoogleAuthSuccess';
+import JobsPage from './features/network/JobsPage'; // Import the new JobsPage component
 
 // Separate Header component with dropdown functionality
 const Header = () => {
@@ -237,6 +238,8 @@ const AppRoutes = ({ currentPath, isAuthenticated, user, navigate }) => {
       return <CoursesPage />;
     case '/auth/google/success':
       return <GoogleAuthSuccess />;
+    case '/jobs': // New route for JobsPage
+      return <JobsPage />;
     default:
       return (
         <div className="text-center py-12">

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { createAppKit } from '@reown/appkit/react';
 import { WagmiProvider } from 'wagmi';
 import { arbitrum, mainnet } from '@reown/appkit/networks';
@@ -30,18 +30,22 @@ const wagmiAdapter = new WagmiAdapter({
   ssr: true,
 });
 
-// 5. Create modal
-createAppKit({
-  adapters: [wagmiAdapter],
-  networks,
-  projectId,
-  metadata,
-  features: {
-    analytics: true,
-  },
-});
+// 5. Create modal (guard against double init)
+let appKitInitialized = false;
+if (!appKitInitialized) {
+  createAppKit({
+    adapters: [wagmiAdapter],
+    networks,
+    projectId,
+    metadata,
+    features: {
+      analytics: true,
+    },
+  });
+  appKitInitialized = true;
+}
 
-export function AppKitProvider({ children }) {
+export function AppKitProvider({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={wagmiAdapter.wagmiConfig}>
       <QueryClientProvider client={queryClient}>
