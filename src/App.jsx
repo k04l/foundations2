@@ -28,6 +28,8 @@ import NetworkPage from './features/network/NetworkPage';
 import CoursesPage from './features/network/CoursesPage';
 import GoogleAuthSuccess from './features/auth/components/GoogleAuthSuccess';
 import JobsPage from './features/network/JobsPage'; // Import the new JobsPage component
+import ToolsPage from './features/tools/ToolsPage';
+import ProjectPicturePage from './features/tools/ProjectPicturePage';
 
 // Separate Header component with dropdown functionality
 const Header = () => {
@@ -37,7 +39,6 @@ const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { navigate } = useNavigation();
   const { isAuthenticated, logout, user } = useAuth();
-  const { currentPath } = useNavigation();
 
   // Mock data for notifications and messages
   const notifications = [
@@ -307,6 +308,12 @@ const AppRoutes = ({ currentPath, isAuthenticated, user, navigate }) => {
       return <GoogleAuthSuccess />;
     case '/jobs': // New route for JobsPage
       return <JobsPage />;
+    case '/tools':
+      return <ToolsPage />;
+    case '/tools/equipment-comparison':
+      return <DesignEngineerLanding />;
+    case '/tools/project-pictures':
+      return <ProjectPicturePage />;
     default:
       return (
         <div className="text-center py-12">
