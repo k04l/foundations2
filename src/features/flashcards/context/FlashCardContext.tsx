@@ -48,7 +48,7 @@ export const FlashCardProvider: React.FC<FlashCardProviderProps> = ({ children }
       setIsLoading(true);
       setError(null);
       const response = await flashCardApi.getDecks();
-      setDecks(response.data);
+      setDecks(response.data.data || []);
     } catch (err) {
       setError('Failed to load decks');
       console.error('Error loading decks:', err);

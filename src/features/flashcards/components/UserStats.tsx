@@ -21,7 +21,7 @@ export const UserStats: React.FC = () => {
     );
   }
 
-  if (!userStats) {
+  if (!userStats || !userStats.confidenceLevels) {
     return null;
   }
 

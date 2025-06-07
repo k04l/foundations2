@@ -1,7 +1,19 @@
-const mongoose = require('mongoose');
-const Deck = require('../models/deck');
-const FlashCard = require('../models/flashCard');
-const config = require('../config/database');
+import mongoose from 'mongoose';
+import Deck from '../models/deck.js';
+import FlashCard from '../models/flashCard.js';
+import dotenv from 'dotenv';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: join(__dirname, '../../.env') });
+
+const config = {
+  uri: process.env.MONGODB_URI, // Changed from MONGO_URI to MONGODB_URI
+  options: {
+    // You can add more options here if needed
+  }
+};
 
 // Sample data
 const decksData = [
@@ -211,3 +223,5 @@ async function seedDatabase() {
 
 // Run the seeder
 seedDatabase();
+
+export default seedDatabase;
