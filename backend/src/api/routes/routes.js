@@ -6,6 +6,7 @@ import profileRoutes from './profile.routes.js';
 import projectsRoutes from './projects.routes.js';
 import companyRoutes from './company.routes.js';
 import userdataRoutes from './userdata.routes.js';
+import { flashCardRoutes } from '../../routes/flashCardRoutes.js';
 // import debugRoutes from './debug.routes.js';
 
 // Import controllers (you'll need to create these)
@@ -39,6 +40,7 @@ router.use('/profiles', profileRoutes);
 router.use('/projects', protect, projectsRoutes);
 router.use('/companies', protect, companyRoutes);
 router.use('/userdata', userdataRoutes);
+router.use('/flashcards', flashCardRoutes);
 
 // router.use('/debug', debugRoutes);
 

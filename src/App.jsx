@@ -30,6 +30,7 @@ import GoogleAuthSuccess from './features/auth/components/GoogleAuthSuccess';
 import JobsPage from './features/network/JobsPage'; // Import the new JobsPage component
 import ToolsPage from './features/tools/ToolsPage';
 import ProjectPicturePage from './features/tools/ProjectPicturePage';
+import { FlashCardsPage, StudySession, FlashCardProvider } from './features/flashcards';
 import { BrowserRouter } from 'react-router-dom';
 
 // Separate Header component with dropdown functionality
@@ -315,6 +316,27 @@ const AppRoutes = ({ currentPath, isAuthenticated, user, navigate }) => {
       return <DesignEngineerLanding />;
     case '/tools/project-pictures':
       return <ProjectPicturePage />;
+    case '/flashcards':
+      return (
+        <FlashCardProvider>
+          <FlashCardsPage />
+        </FlashCardProvider>
+      );
+    case (currentPath.match(/^\/flashcards\/deck\//) ? currentPath : false): {
+      // Extract deckId from path
+      const deckId = currentPath.replace('/flashcards/deck/', '');
+      return (
+        <FlashCardProvider>
+          <StudySession deckId={deckId} />
+        </FlashCardProvider>
+      );
+    }
+    case '/code-cards':
+      return (
+        <FlashCardProvider>
+          <FlashCardsPage />
+        </FlashCardProvider>
+      );
     default:
       return (
         <div className="text-center py-12">
