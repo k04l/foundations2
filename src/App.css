@@ -40,3 +40,14 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Hide Solana wallet adapter help section at the bottom */
+.wallet-adapter-modal-wrapper + div,
+.wallet-adapter-modal-wrapper ~ div {
+  display: none !important;
+}
+
+/* Optionally, hide any global wallet help overlays */
+div[style*='Connect a Wallet'] {
+  display: none !important;
+}

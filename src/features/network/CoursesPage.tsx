@@ -41,28 +41,6 @@ const courses: Course[] = [
   }
 ];
 
-// Header component optimized for mobile
-function Header() {
-  return (
-    <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-4 bg-gray-800 text-white">
-      <div className="flex justify-between items-center w-full sm:w-auto">
-        <h1 className="text-2xl font-bold">Bernoullia</h1>
-        <button className="sm:hidden text-white">Menu</button> {/* Placeholder for mobile menu */}
-      </div>
-      <nav className="hidden sm:flex ml-6">
-        <a href="#" className="mx-2 hover:text-yellow-300">Home</a>
-        <a href="#" className="mx-2 text-yellow-300">Courses</a>
-        <a href="#" className="mx-2 hover:text-yellow-300">About</a>
-      </nav>
-      <input
-        type="text"
-        placeholder="Search courses..."
-        className="mt-4 p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-yellow-300 w-full sm:w-auto sm:mt-0"
-      />
-    </header>
-  );
-}
-
 // CourseCard component with mobile optimizations
 interface CourseCardProps {
   course: Course;
@@ -70,30 +48,36 @@ interface CourseCardProps {
 
 function CourseCard({ course }: CourseCardProps) {
   return (
-    <div className="p-4 sm:p-6 border border-gray-300 rounded-lg shadow-md bg-white">
-      <h3 className="text-xl sm:text-2xl font-semibold text-gray-800">{course.title}</h3>
-      <p className="text-sm sm:text-base text-gray-600 mt-2">{course.description}</p>
-      <details className="mt-4">
-        <summary className="cursor-pointer text-blue-500 font-medium py-2">View Course</summary>
-        <div className="mt-4 text-gray-700 text-sm">
-          <h4 className="font-semibold text-base">Video Lectures</h4>
-          <ul className="list-disc pl-5 mt-2">
-            {course.videos.map((video, index) => (
-              <li key={index}>{video}</li>
-            ))}
-          </ul>
-          <h4 className="font-semibold text-base mt-4">Coursework</h4>
-          <ul className="list-disc pl-5 mt-2">
-            {course.coursework.map((work, index) => (
-              <li key={index}>{work}</li>
-            ))}
-          </ul>
-          <h4 className="font-semibold text-base mt-4">Quizzes</h4>
-          <ul className="list-disc pl-5 mt-2">
-            {course.quizzes.map((quiz, index) => (
-              <li key={index}>{quiz}</li>
-            ))}
-          </ul>
+    <div className="bg-gradient-to-br from-gray-900/80 to-blue-900/80 border border-blue-700/30 rounded-xl shadow-lg p-6 flex flex-col gap-2 hover:scale-[1.02] transition-transform duration-200">
+      <h3 className="text-xl font-bold text-blue-100 drop-shadow-sm">{course.title}</h3>
+      <p className="text-base text-blue-300 mb-2">{course.description}</p>
+      <details className="mt-2 group">
+        <summary className="cursor-pointer text-blue-400 font-semibold py-1 group-open:text-yellow-300 transition-colors">View Course Details</summary>
+        <div className="mt-3 text-blue-200 text-sm space-y-2">
+          <div>
+            <h4 className="font-semibold text-blue-300">Video Lectures</h4>
+            <ul className="list-disc pl-5 mt-1">
+              {course.videos.map((video, index) => (
+                <li key={index}>{video}</li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold text-blue-300">Coursework</h4>
+            <ul className="list-disc pl-5 mt-1">
+              {course.coursework.map((work, index) => (
+                <li key={index}>{work}</li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold text-blue-300">Quizzes</h4>
+            <ul className="list-disc pl-5 mt-1">
+              {course.quizzes.map((quiz, index) => (
+                <li key={index}>{quiz}</li>
+              ))}
+            </ul>
+          </div>
         </div>
       </details>
     </div>
@@ -103,11 +87,11 @@ function CourseCard({ course }: CourseCardProps) {
 // Main CoursesPage component with mobile optimizations
 function CoursesPage() {
   return (
-    <div className="bg-gray-100">
-      <Header />
-      <div className="container mx-auto p-4 sm:p-6">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">Available Courses</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="min-h-screen bg-transparent">
+      {/* Site-wide header/footer are used by App.jsx */}
+      <div className="container mx-auto px-2 sm:px-4 py-8">
+        <h2 className="text-3xl font-extrabold text-blue-100 mb-8 drop-shadow">Available Courses</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {courses.map((course, index) => (
             <CourseCard key={index} course={course} />
           ))}
