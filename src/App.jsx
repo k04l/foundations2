@@ -15,23 +15,21 @@ import { useAuth } from './features/auth/hooks/useAuth';
 import { Dashboard } from './features/dashboard/components/Dashboard';
 import { HomePage } from './features/home/components/HomePage';
 import { DesignEngineerLanding } from './features/home/components/DesignEngineerLanding';
-import { Home, Settings, User, LogOut, Bell, MessageCircle, Bitcoin } from 'lucide-react';
+import { Home, Settings, User, LogOut, Bell, MessageCircle } from 'lucide-react';
 import ProfileView from './features/profile/components/ProfileView';
 import ProfileEdit from './features/profile/components/ProfileEdit';
 import { useNavigation } from './features/auth/hooks/useNavigation';
 import { Loader } from './components/ui/loader';
 import ErrorBoundary from './features/auth/components/ErrorBoundary';
 import PropTypes from 'prop-types';
-import { AppKitProvider } from './components/WalletProvider';
-import { WalletConnectButtons } from './components/WalletConnectButtons';
+import { BrowserRouter } from 'react-router-dom';
 import NetworkPage from './features/network/NetworkPage';
 import CoursesPage from './features/network/CoursesPage';
 import GoogleAuthSuccess from './features/auth/components/GoogleAuthSuccess';
-import JobsPage from './features/network/JobsPage'; // Import the new JobsPage component
+import JobsPage from './features/network/JobsPage';
 import ToolsPage from './features/tools/ToolsPage';
 import ProjectPicturePage from './features/tools/ProjectPicturePage';
 import { FlashCardsPage, StudySession, FlashCardProvider } from './features/flashcards';
-import { BrowserRouter } from 'react-router-dom';
 
 // Separate Header component with dropdown functionality
 const Header = () => {
@@ -132,13 +130,8 @@ const Header = () => {
               <Settings size={22} />
             </button>
           </div>
-          {/* Right: Icons and Wallets (desktop) */}
+          {/* Right: Icons (desktop) */}
           <div className="hidden sm:flex items-center space-x-2 flex-shrink-0">
-            {/* WalletConnectButtons with Bitcoin icon */}
-            <span className="flex items-center gap-1">
-              <Bitcoin className="text-yellow-400 w-5 h-5" aria-label="Bitcoin" />
-              <WalletConnectButtons />
-            </span>
             {/* Notifications */}
             {isAuthenticated && (
               <button onClick={() => setNotificationsOpen(!notificationsOpen)} className="relative p-2 rounded-full hover:bg-blue-900 text-blue-300" aria-label="Notifications">
@@ -205,10 +198,6 @@ const Header = () => {
           {/* Mobile menu dropdown */}
           {mobileMenuOpen && (
             <div className="sm:hidden absolute top-full left-0 w-full bg-gray-900/95 border-t border-blue-500/20 shadow-lg z-50 flex flex-col gap-2 p-4 animate-fade-in">
-              <span className="flex items-center gap-2 mb-2">
-                <Bitcoin className="text-yellow-400 w-5 h-5" aria-label="Bitcoin" />
-                <WalletConnectButtons />
-              </span>
               {isAuthenticated && (
                 <button onClick={() => setNotificationsOpen(!notificationsOpen)} className="relative p-2 rounded-full hover:bg-blue-900 text-blue-300 w-full text-left" aria-label="Notifications">
                   <Bell className="w-6 h-6 inline mr-2" /> Notifications
@@ -482,7 +471,7 @@ const AppContent = () => {
 const App = () => {
   return (
     <ErrorBoundary>
-      <AppKitProvider>
+      {/* <AppKitProvider> */}
         {/* BrowserRouter must be INSIDE AppKitProvider for context to work with wallet adapters */}
         <BrowserRouter>
           <NavigationProvider>
@@ -491,7 +480,7 @@ const App = () => {
             </AuthProvider>
           </NavigationProvider>
         </BrowserRouter>
-      </AppKitProvider>
+      {/* </AppKitProvider> */}
     </ErrorBoundary>
   );
 };
