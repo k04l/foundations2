@@ -30,6 +30,9 @@ export const config = {
     mailUser: process.env.MAIL_USER,
     mailPassword: process.env.MAIL_PASSWORD,
     mailFromName: process.env.MAIL_FROM_NAME || 'Foundations',
+
+    // Session configuration
+    sessionSecret: process.env.SESSION_SECRET,
     
     // Ensure all required variables are present
     validate() {

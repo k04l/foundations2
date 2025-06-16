@@ -30,6 +30,7 @@ import JobsPage from './features/network/JobsPage';
 import ToolsPage from './features/tools/ToolsPage';
 import ProjectPicturePage from './features/tools/ProjectPicturePage';
 import { FlashCardsPage, StudySession, FlashCardProvider } from './features/flashcards';
+import ProjectsPage from './features/home/components/ProjectsPage';
 
 // Separate Header component with dropdown functionality
 const Header = () => {
@@ -326,6 +327,8 @@ const AppRoutes = ({ currentPath, isAuthenticated, user, navigate }) => {
           <FlashCardsPage />
         </FlashCardProvider>
       );
+    case '/projects':
+      return <ProjectsPage />;
     default:
       return (
         <div className="text-center py-12">

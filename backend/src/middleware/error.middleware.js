@@ -23,7 +23,7 @@ export const notFound = (req, res, next) => {
 
 // Main error handler
 export const errorHandler = (err, req, res, next) => {
-  err.statusCode = err.statusCode || 500;
+  err.statusCode = typeof err.statusCode === 'number' ? err.statusCode : 500;
   err.status = err.status || 'error';
 
   // Log error

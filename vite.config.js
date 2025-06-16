@@ -59,16 +59,9 @@ export default defineConfig({
     proxy: {
       // Proxy all /api requests to your backend server
       '/api': {
-        // Your backend server address
         target: 'http://localhost:3000',
-        
-        // Required for proxying to different domains
         changeOrigin: true,
-        
-        // Don't validate SSL certificates
         secure: false,
-        
-        // Enable WebSocket proxy
         ws: true,
         configure: (proxy, options) => {
           proxy.on('error', (err, req, res) => {
@@ -82,16 +75,19 @@ export default defineConfig({
               });
           });
         },
-
-
-        
-        // Rewrite function to help with debugging
         rewrite: (path) => {
           console.log(`Proxying request: ${path}`);
           return path;
         },
-
-      }
+      },
+      // Proxy for remote flashcards API
+      '/api/v1/flashcards': {
+        target: 'https://bernoullia.com/api/v1/flashcards',
+        changeOrigin: true,
+        secure: true,
+        ws: false,
+        rewrite: (path) => path.replace(/^\/api\/v1\/flashcards/, ''),
+      },
     },
     //Add middleware to handle client-side routing
     middlewares: [
