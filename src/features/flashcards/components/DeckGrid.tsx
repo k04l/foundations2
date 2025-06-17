@@ -44,7 +44,8 @@ export const DeckGrid: React.FC = () => {
     );
   }
 
-  const groupedDecks = decks.reduce((acc, deck) => {
+  // Group decks by category with proper typing
+  const groupedDecks: Record<string, typeof decks> = decks.reduce((acc, deck) => {
     if (!acc[deck.category]) {
       acc[deck.category] = [];
     }
@@ -54,38 +55,34 @@ export const DeckGrid: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      {Object.entries(groupedDecks).map(([category, categoryDecks]) => (
+      {Object.entries(groupedDecks).map(([category, decksInCategory]) => (
         <div key={category}>
-          <h2 className="text-2xl font-bold mb-4 capitalize">
-            {category.replace('-', ' ')}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {categoryDecks.map((deck) => (
-              <div
+          <h3 className="text-xl font-bold text-blue-200 mb-4 pl-2 border-l-4 border-blue-500 uppercase tracking-wide">
+            {category.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {decksInCategory.map((deck: any) => (
+              <button
                 key={deck._id}
                 onClick={() => handleDeckClick(deck._id)}
-                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer overflow-hidden"
+                className="w-full text-left bg-primary-800 border-2 border-blue-400 rounded-2xl shadow-xl hover:shadow-2xl hover:border-blue-300 transition-all duration-200 p-6 flex flex-col gap-2 group focus:outline-none focus:ring-4 focus:ring-blue-400/40 ring-offset-2 ring-offset-primary-900"
               >
-                <div className={`h-2 ${categoryColors[deck.category as keyof typeof categoryColors]}`} />
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-3">
-                    <span className="text-3xl">{deck.icon}</span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${difficultyBadgeColors[deck.difficulty]}`}>
-                      {deck.difficulty}
-                    </span>
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">{deck.title}</h3>
-                  <p className="text-gray-600 text-sm mb-4">{deck.description}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">
-                      {deck.cardCount} cards
-                    </span>
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-3xl">
+                    {deck.icon || '📚'}
+                  </span>
+                  <span className={`ml-auto px-3 py-1 rounded-full text-xs font-semibold ${(difficultyBadgeColors as any)[deck.difficulty] || 'bg-gray-100 text-gray-800'}`}>{deck.difficulty}</span>
                 </div>
-              </div>
+                <div className="text-lg font-bold text-blue-100 mb-1 group-hover:text-blue-300 transition-colors">
+                  {deck.title}
+                </div>
+                <div className="text-blue-300 text-sm mb-2">
+                  {deck.description}
+                </div>
+                <div className="text-blue-400 text-xs font-medium">
+                  {deck.cardCount} card{deck.cardCount === 1 ? '' : 's'}
+                </div>
+              </button>
             ))}
           </div>
         </div>
