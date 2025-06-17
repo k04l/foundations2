@@ -75,18 +75,7 @@ export default defineConfig({
               });
           });
         },
-        rewrite: (path) => {
-          console.log(`Proxying request: ${path}`);
-          return path;
-        },
-      },
-      // Proxy for remote flashcards API
-      '/api/v1/flashcards': {
-        target: 'https://bernoullia.com/api/v1/flashcards',
-        changeOrigin: true,
-        secure: true,
-        ws: false,
-        rewrite: (path) => path.replace(/^\/api\/v1\/flashcards/, ''),
+        rewrite: (path) => path,
       },
     },
     //Add middleware to handle client-side routing

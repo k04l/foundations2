@@ -4,9 +4,18 @@ import { AppError } from '../../middleware/error.middleware.js';
 // Get all projects for the authenticated user
 export const getUserProjects = async (req, res, next) => {
   try {
+    if (!req.user || !req.user.id) {
+      console.error('getUserProjects: No user in request');
+      return res.status(401).json({ error: 'Unauthorized: No user found in request' });
+    }
     const user = await User.findById(req.user.id);
+    if (!user) {
+      console.error('getUserProjects: No user found in DB');
+      return res.status(404).json({ error: 'User not found' });
+    }
     res.status(200).json({ projects: user.projects || [] });
   } catch (err) {
+    console.error('getUserProjects error:', err);
     next(err);
   }
 };

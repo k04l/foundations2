@@ -2,7 +2,7 @@ import axios from 'axios';
 import { API_BASE_URL } from '../../../config/constants';
 
 const api = axios.create({
-  baseURL: `${API_BASE_URL}/api/v1/flashcards`,
+  baseURL: `${API_BASE_URL.replace(/\/$/, '')}/api/v1/flashcards`,
   headers: {
     'Content-Type': 'application/json'
   }
